@@ -18,24 +18,36 @@ def initialize_schedule(tasks_to_schedule: list[Task]) -> Schedule:
     # Xáo trộn các vị trí một cách ngẫu nhiên
     random.shuffle(available_slots)
 
+    occupied_slots = set() # Dùng set để kiểm tra slot đã bị chiếm nhanh hơn
+
     # Xếp từng task vào các slot đã xáo trộn
     for task in new_schedule.tasks:
         is_placed = False
-        while not is_placed and available_slots:
-            # Lấy một vị trí ngẫu nhiên để thử đặt task
-            start_day_idx, start_slot_idx = available_slots.pop(0)
+        # Duyệt qua các vị trí đã được xáo trộn để tìm chỗ trống
+        for start_day_idx, start_slot_idx in available_slots:
 
-            # Kiểm tra xem task có đủ chỗ để đặt không
-            if start_slot_idx + task.duration <= WORK_END_SLOT:
+            # Kiểm tra xem có đủ thời gian trong ngày không
+            if start_slot_idx + task.duration > WORK_END_SLOT:
+                continue # Nếu không đủ, bỏ qua vị trí này
 
-                # Giả định vị trí này hợp lệ và đặt task vào
-                # (Chúng ta sẽ xử lý xung đột sau trong hàm fitness)
+            # Kiểm tra xem các slot cần thiết có bị chiếm dụng không
+            needed_slots = []
+            has_collision = False
+            for i in range(task.duration):
+                slot_to_check = (start_day_idx, start_slot_idx + i)
+                if slot_to_check in occupied_slots:
+                    has_collision = True
+                    break # Nếu có xung đột, dừng kiểm tra và thử vị trí khác
+                needed_slots.append(slot_to_check)
+
+            # Nếu không có xung đột, đặt lịch và ghi nhận các slot đã chiếm
+            if not has_collision:
                 new_schedule.timetable[(start_day_idx, start_slot_idx)] = task
+                occupied_slots.update(needed_slots)
                 is_placed = True
+                break # Đã xếp xong task này, chuyển sang task tiếp theo
 
-        if not is_placed:
-            print(f"CẢNH BÁO: Không đủ chỗ cho công việc {task.name}")
-
+    # Hàm crossover gọi hàm này nên cũng sẽ được hưởng lợi từ việc sửa lỗi
     return new_schedule
 
 
