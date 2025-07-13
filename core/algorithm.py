@@ -93,3 +93,91 @@ def calculate_fitness(schedule: Schedule) -> float:
 
     schedule.fitness = score
     return score
+
+
+def selection(population: list[Schedule]) -> list[Schedule]:
+    """
+    Lựa chọn những cá thể tốt nhất từ quần thể để lai ghép.
+    Sử dụng phương pháp "Tournament Selection".
+    """
+    selected = []
+    for _ in range(len(population)):
+        # Lấy ngẫu nhiên 2 cá thể từ quần thể để "so tài"
+        participant1 = random.choice(population)
+        participant2 = random.choice(population)
+        # Chọn cá thể có điểm fitness cao hơn
+        winner = participant1 if participant1.fitness > participant2.fitness else participant2
+        selected.append(winner)
+    return selected
+
+def crossover(parent1: Schedule, parent2: Schedule) -> Schedule:
+    """
+    Lai ghép 2 cá thể cha mẹ để tạo ra một cá thể con.
+    Phương pháp: Lấy một nửa số task của cha và một nửa của mẹ.
+    """
+    num_tasks_from_parent1 = len(parent1.tasks) // 2
+
+    # Lấy task từ cha mẹ
+    child_tasks = parent1.tasks[:num_tasks_from_parent1] + parent2.tasks[num_tasks_from_parent1:]
+
+    # Tạo một lịch trình ngẫu nhiên mới từ bộ task đã lai ghép
+    # Đây là cách đơn giản để đảm bảo lịch trình con hợp lệ
+    child_schedule = initialize_schedule(child_tasks)
+    return child_schedule
+
+def mutate(schedule: Schedule) -> Schedule:
+    """
+    Gây đột biến nhẹ cho một lịch trình để tạo ra sự đa dạng.
+    Phương pháp: Hoán đổi vị trí của 2 công việc ngẫu nhiên.
+    """
+    # Lấy 2 vị trí ngẫu nhiên trong timetable để hoán đổi
+    keys = list(schedule.timetable.keys())
+    if len(keys) > 1:
+        key1, key2 = random.sample(keys, 2)
+
+        # Hoán đổi task tại 2 vị trí này
+        schedule.timetable[key1], schedule.timetable[key2] = schedule.timetable[key2], schedule.timetable[key1]
+
+    return schedule
+
+
+def run_genetic_algorithm(tasks_to_schedule: list[Task], population_size: int, generations: int):
+    """
+    Hàm chính để chạy toàn bộ thuật toán di truyền.
+    """
+    # 1. Khởi tạo quần thể ban đầu
+    population = [initialize_schedule(tasks_to_schedule) for _ in range(population_size)]
+
+    for gen in range(generations):
+        # 2. Đánh giá quần thể
+        for schedule in population:
+            calculate_fitness(schedule)
+
+        # 3. Lựa chọn các cá thể tốt nhất
+        selected_parents = selection(population)
+
+        # 4. Tạo thế hệ mới
+        next_generation = []
+        for i in range(0, len(selected_parents), 2):
+            parent1 = selected_parents[i]
+            # Đảm bảo có đủ cha mẹ để lai ghép
+            parent2 = selected_parents[i+1] if (i+1) < len(selected_parents) else selected_parents[0]
+
+            # 5. Lai ghép và Đột biến
+            child = crossover(parent1, parent2)
+
+            # Áp dụng đột biến với một xác suất nhỏ (ví dụ 10%)
+            if random.random() < 0.1:
+                child = mutate(child)
+
+            next_generation.append(child)
+
+        population = next_generation
+
+        # In ra thông tin của thế hệ hiện tại để theo dõi
+        best_fitness_in_gen = max(schedule.fitness for schedule in population)
+        print(f"Thế hệ {gen + 1}/{generations} - Fitness tốt nhất: {best_fitness_in_gen:.2f}")
+
+    # Trả về cá thể tốt nhất trong quần thể cuối cùng
+    best_schedule = max(population, key=lambda s: s.fitness)
+    return best_schedule
