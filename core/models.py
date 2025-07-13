@@ -1,3 +1,11 @@
+# Giả định 1 slot = 30 phút
+SLOTS_PER_DAY = 48
+WORKING_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+
+# Khung giờ làm việc: 8h sáng (slot 16) đến 5h chiều (slot 34)
+WORK_START_SLOT = 16 
+WORK_END_SLOT = 34
+
 class Task:
     """
     Đại diện cho một công việc hoặc môn học cần được xếp lịch.
@@ -17,9 +25,6 @@ class Task:
         """Giúp in ra thông tin của Task một cách rõ ràng."""
         return f"Task(Tên: {self.name}, Thời lượng: {self.duration} slot)"
     
-
-# Giả định: 1 ngày có 24 giờ, 1 giờ có 2 slot (30 phút/slot)
-SLOTS_PER_DAY = 48 
 
 class Schedule:
     """
