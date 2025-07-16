@@ -148,10 +148,22 @@ def mutate(schedule: Schedule) -> Schedule:
     return temp_schedule
 
 
-def run_genetic_algorithm(tasks_to_schedule: list[Task], population_size: int, generations: int):
+def run_genetic_algorithm(tasks_to_schedule: list[Task], population_size: int, generations: int, mutation_rate: float) -> Schedule:
     """
-    Hàm chính để chạy thuật toán di truyền.
+    The main function to run the genetic algorithm.
+    It initializes a population of schedules and evolves them over a number of generations
+    to find the best possible schedule based on the fitness function.
+
+    Args:
+        tasks_to_schedule: A list of Task objects to be scheduled.
+        population_size: The number of schedules in the population.
+        generations: The number of generations to evolve.
+        mutation_rate: The probability of a mutation occurring.
+
+    Returns:
+        The best schedule found by the algorithm.
     """
+
     population = [initialize_schedule(tasks_to_schedule) for _ in range(population_size)]
 
     for gen in range(generations):
@@ -170,7 +182,7 @@ def run_genetic_algorithm(tasks_to_schedule: list[Task], population_size: int, g
         while len(next_generation) < population_size:
             parent1, parent2 = random.sample(selected_parents, 2)
             child = crossover(parent1, parent2)
-            if random.random() < 0.2: # Tăng xác suất đột biến
+            if random.random() < mutation_rate:
                 child = mutate(child)
             next_generation.append(child)
         

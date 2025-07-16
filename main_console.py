@@ -2,27 +2,43 @@ from core.models import Task, WORKING_DAYS
 from core.algorithm import run_genetic_algorithm
 
 # --- Các tham số cho thuật toán ---
-POPULATION_SIZE = 50   # Số lượng lịch trình trong một quần thể
+POPULATION_SIZE = 200   # Số lượng lịch trình trong một quần thể
 GENERATIONS = 100      # Số thế hệ sẽ "tiến hóa"
+MUTATION_RATE = 0.2  # Tỷ lệ đột biến trong thuật toán di truyền
 
 if __name__ == "__main__":
-    all_tasks = [
-        # Các công việc TRONG GIỜ (bắt buộc phải ghi is_work_time=True)
-        Task(name="Làm đồ án DSS", duration=4, priority=3, is_work_time=True),
-        Task(name="Họp nhóm", duration=3, priority=3, is_work_time=True),
 
-        # Các công việc NGOÀI GIỜ (mặc định là is_work_time=False)
-        Task(name="Tập thể dục", duration=2, priority=1),
-        Task(name="Đọc sách", duration=2, priority=1),
-        Task(name="Học Tiếng Anh", duration=3, priority=2),
-        Task(name="Dọn dẹp nhà", duration=3, priority=2),
+    all_tasks = [
+        # --- Công việc ưu tiên cao (Dự án Alpha) ---
+        Task(name="[Alpha] Lên kế hoạch các mốc quan trọng", duration=2, priority=1, is_work_time=True),
+        Task(name="[Alpha] Phát triển tính năng cốt lõi", duration=6, priority=1, is_work_time=True),
+        Task(name="[Alpha] Viết tài liệu kỹ thuật", duration=3, priority=2, is_work_time=True),
+        Task(name="[Alpha] Họp đánh giá với team", duration=2, priority=2, is_work_time=True),
+
+        # --- Công việc thông thường ---
+        Task(name="Kiểm tra và trả lời email", duration=2, priority=3, is_work_time=True),
+        Task(name="Chuẩn bị báo cáo tuần", duration=3, priority=3, is_work_time=True),
+
+        # --- Việc cá nhân ưu tiên cao ---
+        Task(name="Đi tập gym", duration=3, priority=1),
+        Task(name="Đặt lịch hẹn bác sĩ", duration=1, priority=1),
+
+        # --- Việc cá nhân ưu tiên trung bình ---
+        Task(name="Học lấy chứng chỉ", duration=4, priority=2),
+        Task(name="Thanh toán hóa đơn hàng tháng", duration=1, priority=2),
+
+        # --- Việc cá nhân ưu tiên thấp ---
+        Task(name="Đi mua sắm thực phẩm", duration=3, priority=4),
+        Task(name="Dọn dẹp căn hộ", duration=4, priority=4),
+        Task(name="Đọc sách", duration=2, priority=4),
     ]
 
     print("--- BẮT ĐẦU QUÁ TRÌNH TIẾN HÓA ---")
     best_schedule_found = run_genetic_algorithm(
         tasks_to_schedule=all_tasks,
         population_size=POPULATION_SIZE,
-        generations=GENERATIONS
+        generations=GENERATIONS,
+        mutation_rate=MUTATION_RATE
     )
 
     print("\n--- LỊCH TRÌNH TỐI ƯU NHẤT ĐƯỢC TÌM THẤY ---")
