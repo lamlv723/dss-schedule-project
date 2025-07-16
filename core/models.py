@@ -1,51 +1,65 @@
-# Giả định 1 slot = 30 phút
-SLOTS_PER_DAY = 48
-WORKING_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+from dataclasses import dataclass, field
+from datetime import time
+from typing import List
 
-# Khung giờ làm việc: 8h sáng (slot 16) đến 5h chiều (slot 34)
-WORK_START_SLOT = 16 
-WORK_END_SLOT = 34
+# This file exclusively contains data class definitions for the project's core objects.
+# It does not hold any configuration constants, which are now located in config.py.
 
-TOTAL_PRIORITY_LEVELS = 5
-
+@dataclass
 class Task:
     """
-    Đại diện cho một công việc hoặc môn học cần được xếp lịch.
+    Represents a single task to be scheduled.
+    Using @dataclass to auto-generate __init__, __eq__, etc.
     """
-    def __init__(self, name, duration, priority=1, is_work_time=False):
-        """
-        Khởi tạo một công việc.
-        - name (str): Tên công việc.
-        - duration (int): Thời lượng cần thiết (1 slot = 30 phút).
-        - priority (int): Mức độ ưu tiên.
-        - is_work_time (bool): True nếu là việc trong giờ làm việc, False nếu ngoài giờ.
-        """
-        self.name = name
-        self.duration = duration
-        self.priority = priority
-        self.is_work_time = is_work_time # LƯU LẠI THUỘC TÍNH MỚI
+    name: str
+    duration: int
+    priority: int = 1
+    is_work_time: bool = False
 
-    def __repr__(self):
-        """Giúp in ra thông tin của Task một cách rõ ràng."""
+    def __repr__(self) -> str:
+        """
+        Provides a custom, user-defined string representation for the Task object.
+        This method is preserved and overrides the default __repr__ from @dataclass.
+        """
         time_type = "Trong giờ" if self.is_work_time else "Ngoài giờ"
         return f"Task(Tên: {self.name}, Thời lượng: {self.duration} slot, Loại: {time_type})"
-    
 
+@dataclass
+class ScheduledTask:
+    """
+    Represents a task that has been placed into the schedule.
+    It links a Task to a specific day and start time.
+    """
+    task: Task
+    day: str
+    start_slot: int
+
+@dataclass
 class Schedule:
     """
-    Đại diện cho một thời khóa biểu (một "cá thể" trong thuật toán di truyền).
-    Đây là một giải pháp khả thi cho bài toán xếp lịch.
+    Represents a complete schedule, which is a collection of ScheduledTask objects.
+    This is equivalent to a "chromosome" in the genetic algorithm.
     """
-    def __init__(self, tasks_to_schedule):
-        """
-        Khởi tạo một thời khóa biểu.
-        - tasks_to_schedule (list[Task]): Danh sách các công việc cần được xếp.
-        """
-        self.tasks = tasks_to_schedule
-        # timetable là một dictionary lưu lịch trình.
-        # Key: (ngày, slot_bắt_đầu), Value: Task được gán vào
-        self.timetable = {}
-        self.fitness = -1 # Điểm để đánh giá độ tốt của lịch trình
+    # A schedule is defined by the list of tasks placed within it.
+    scheduled_tasks: List[ScheduledTask] = field(default_factory=list)
+    
+    # The fitness score is calculated and assigned by the algorithm.
+    fitness: float = -1.0
 
-    def __repr__(self):
-        return f"Schedule(Fitness: {self.fitness})"
+    def __repr__(self) -> str:
+        """
+
+        Provides a simple representation of the Schedule, showing only its fitness score.
+        This method is preserved and overrides the default __repr__ from @dataclass.
+        """
+        return f"Schedule(Fitness: {self.fitness:.2f})"
+
+@dataclass
+class BlockedTimeSlot:
+    """
+    Represents a period of time that is unavailable for scheduling.
+    The algorithm will not be allowed to place any tasks within this slot.
+    """
+    day: str
+    start_time: time
+    end_time: time

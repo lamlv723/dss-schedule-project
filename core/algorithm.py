@@ -1,185 +1,228 @@
 import random
-from collections import defaultdict
-from .models import *
+from typing import List
+from copy import deepcopy
 
-# --- 1. HÀM KHỞI TẠO ĐÃ ĐƯỢC CẢI TIẾN ---
-def initialize_schedule(tasks_to_schedule: list[Task]) -> Schedule:
-    """
-    Tạo Schedule ngẫu nhiên, ưu tiên task quan trọng và xếp càng sớm càng tốt.
-    """
-    new_schedule = Schedule(tasks_to_schedule)
-    occupied_slots = set()
+# Import utilities, models, and configs
+from .utils import is_timeslot_blocked, time_to_slot, find_valid_spot_for_task
+from .models import Task, Schedule, BlockedTimeSlot, ScheduledTask
+from . import configs
 
-    # Sắp xếp task theo độ ưu tiên tăng dần (1 là ưu tiên cao nhất)
-    sorted_tasks = sorted(tasks_to_schedule, key=lambda x: x.priority, reverse=False)
+# ===================================================================
+#
+# SECTION 1: INITIALIZATION & MUTATION (LOGIC REFINED)
+#
+# ===================================================================
+def initialize_schedule(
+    tasks_to_schedule: List[Task],
+    blocked_slots: List[BlockedTimeSlot]
+) -> Schedule:
+    """Creates a single, new, randomly-generated, and valid schedule."""
+    new_schedule = Schedule()
+    tasks = deepcopy(tasks_to_schedule)
+    random.shuffle(tasks)
+    occupied_slots = {day: [False] * configs.SLOTS_PER_DAY for day in configs.DAYS_OF_WEEK}
 
-    # --- Hàm phụ để xếp lịch ---
-    def _place_tasks(tasks, available_slots):
-        # KHÔNG XÁO TRỘN SLOT NỮA để ưu tiên xếp sớm
-        # random.shuffle(available_slots)
-        for task in tasks:
-            # Tìm một vị trí ngẫu nhiên trong danh sách slot để bắt đầu tìm kiếm
-            # Điều này giúp tạo ra sự đa dạng ban đầu
-            start_search_index = random.randint(0, len(available_slots) - 1)
+    for task in tasks:
+        spot = find_valid_spot_for_task(task, occupied_slots, blocked_slots)
+        if spot:
+            day, start_slot = spot
+            new_schedule.scheduled_tasks.append(ScheduledTask(task=task, day=day, start_slot=start_slot))
+            for i in range(task.duration):
+                occupied_slots[day][start_slot + i] = True
+        else:
+            print(f"Warning (Initialization): Could not place task '{task.name}'.")
             
-            # Duyệt vòng tròn để đảm bảo thử hết các slot
-            for i in range(len(available_slots)):
-                slot_index = (start_search_index + i) % len(available_slots)
-                start_day_idx, start_slot_idx = available_slots[slot_index]
-
-                day_end_slot = WORK_END_SLOT if task.is_work_time else SLOTS_PER_DAY
-                if start_slot_idx + task.duration > day_end_slot:
-                    continue
-
-                needed_slots = [(start_day_idx, start_slot_idx + j) for j in range(task.duration)]
-                if not any(slot in occupied_slots for slot in needed_slots):
-                    new_schedule.timetable[(start_day_idx, start_slot_idx)] = task
-                    occupied_slots.update(needed_slots)
-                    break
-    
-    work_tasks = [t for t in sorted_tasks if t.is_work_time]
-    off_hours_tasks = [t for t in sorted_tasks if not t.is_work_time]
-
-    # Tạo danh sách slot và xếp lịch
-    work_time_slots = [(d, s) for d in range(len(WORKING_DAYS)) for s in range(WORK_START_SLOT, WORK_END_SLOT)]
-    off_hours_slots = [(d, s) for d in range(len(WORKING_DAYS)) for s in list(range(0, WORK_START_SLOT)) + list(range(WORK_END_SLOT, SLOTS_PER_DAY))]
-    
-    _place_tasks(work_tasks, work_time_slots)
-    _place_tasks(off_hours_tasks, off_hours_slots)
-
     return new_schedule
 
-# --- 2. HÀM FITNESS ĐÃ ĐƯỢC CẢI TIẾN ---
-def calculate_fitness(schedule: Schedule) -> float:
+# ===================================================================
+#
+# SECTION 2: FITNESS CALCULATION (UNCHANGED)
+#
+# ===================================================================
+
+def calculate_fitness(schedule: Schedule, blocked_slots: List[BlockedTimeSlot]) -> float:
     """
-    Tính điểm fitness. Thưởng cho việc xếp sớm và ưu tiên cao.
+    Calculates the fitness score of a given schedule based on multiple, refined criteria.
+    - Higher score is better.
     """
-    score = 0
-    all_used_slots = []
+    if not schedule.scheduled_tasks:
+        return 0.0
 
-    for (day_idx, start_slot_idx), task in schedule.timetable.items():
-        # Thưởng điểm dựa trên độ ưu tiên (priority 1 được thưởng nhiều nhất)
-        score += (TOTAL_PRIORITY_LEVELS - task.priority) * 10
+    score = 1000.0  # Start with a base score
+    
+    sorted_tasks = sorted(schedule.scheduled_tasks, key=lambda x: (configs.DAYS_OF_WEEK.index(x.day), x.start_slot))
+    days_in_schedule = {st.day for st in sorted_tasks}
+    
+    # --- Criterion 1: Priority Weighting (Reward for earliness) ---
+    total_slots_in_week = len(configs.DAYS_OF_WEEK) * configs.SLOTS_PER_DAY
+    for st in sorted_tasks:
+        priority_weight = (configs.TOTAL_PRIORITY_LEVELS - st.task.priority) ** 2
+        time_position_score = total_slots_in_week - (configs.DAYS_OF_WEEK.index(st.day) * configs.SLOTS_PER_DAY + st.start_slot)
+        score += priority_weight * time_position_score * 0.5
+
+    # --- Criterion 2: Intra-day Gap Penalty (Penalize gaps within a day) ---
+    for i in range(len(sorted_tasks) - 1):
+        current_task, next_task = sorted_tasks[i], sorted_tasks[i+1]
+        if current_task.day == next_task.day:
+            gap = next_task.start_slot - (current_task.start_slot + current_task.task.duration)
+            if gap > 1:  # Penalize gaps > 30 minutes
+                score -= gap * 5
+
+    # --- Criterion 3: Day Span Penalty (Penalize using too many days) ---
+    if days_in_schedule:
+        score -= (len(days_in_schedule) - 1) * 100
         
-        # Thưởng CÀNG NHIỀU nếu xếp CÀNG SỚM
-        # (5 ngày * 48 slot/ngày) = 240. Ta lấy max trừ đi để slot càng nhỏ điểm càng cao.
-        earliness_bonus = (len(WORKING_DAYS) * SLOTS_PER_DAY) - (day_idx * SLOTS_PER_DAY + start_slot_idx)
-        score += earliness_bonus * 0.1 # Trọng số nhỏ để không lấn át priority
-
-        for i in range(task.duration):
-            all_used_slots.append((day_idx, start_slot_idx + i))
-
-    # Phạt các "lỗ hổng" thời gian
-    if all_used_slots:
-        all_used_slots.sort()
-        gaps = 0
-        for i in range(len(all_used_slots) - 1):
-            current_day, current_slot = all_used_slots[i]
-            next_day, next_slot = all_used_slots[i+1]
-            if current_day == next_day:
-                gap_size = next_slot - (current_slot + 1)
-                if gap_size > 0:
-                    gaps += gap_size
-        score -= gaps * 1
+    # --- NEW: Criterion 4: Inter-day Gap Penalty (Penalize empty days in between) ---
+    if len(days_in_schedule) > 1:
+        first_day_index = configs.DAYS_OF_WEEK.index(sorted_tasks[0].day)
+        last_day_index = configs.DAYS_OF_WEEK.index(sorted_tasks[-1].day)
         
+        # Check all the days between the first and the last day of activity
+        for day_index in range(first_day_index + 1, last_day_index):
+            day_name = configs.DAYS_OF_WEEK[day_index]
+            # If a day in the middle has no tasks, apply a penalty
+            if day_name not in days_in_schedule:
+                score -= 75  # A significant penalty for each idle day
+
     schedule.fitness = score
     return score
 
-# --- 3. HÀM CROSSOVER VÀ MUTATE ĐÃ ĐƯỢC CẢI TIẾN ---
-def selection(population: list[Schedule]) -> list[Schedule]:
-    """Tournament Selection"""
+# ===================================================================
+#
+# SECTION 3: GENETIC OPERATORS (CROSSOVER REPLACED, MUTATE REFINED)
+#
+# ===================================================================
+
+def selection(population: List[Schedule]) -> List[Schedule]:
+    """Selects parents using Tournament Selection."""
     selected = []
-    pop_size = len(population)
-    for _ in range(pop_size):
-        # Lấy ra 5% của quần thể để "so tài", tối thiểu 2
-        tournament_size = max(2, int(pop_size * 0.05))
-        participants = random.sample(population, tournament_size)
+    for _ in range(len(population)):
+        participants = random.sample(population, k=max(2, int(len(population) * 0.05)))
         winner = max(participants, key=lambda s: s.fitness)
         selected.append(winner)
     return selected
 
-def crossover(parent1: Schedule, parent2: Schedule) -> Schedule:
+def crossover(parent1: Schedule, parent2: Schedule, blocked_slots: List[BlockedTimeSlot]) -> Schedule:
     """
-    Lai ghép thực sự: Kết hợp timetable của cha mẹ và sửa lỗi xung đột.
+    Creates a new, valid child schedule by combining two parents.
+    This is an advanced crossover operator with a repair mechanism.
     """
-    child_tasks = parent1.tasks
-    child_schedule = Schedule(child_tasks)
+    child = Schedule()
     
-    # Lấy một nửa task từ parent1
-    for i, ((day, slot), task) in enumerate(parent1.timetable.items()):
-        if i % 2 == 0:
-             child_schedule.timetable[(day, slot)] = task
-
-    # Lấy nửa còn lại từ parent2, sửa xung đột nếu có
-    occupied_slots = {(d, s + i) for (d, s), t in child_schedule.timetable.items() for i in range(t.duration)}
+    # --- Step 1: Inherit a valid subset of tasks from Parent 1 ---
+    tasks_from_p1 = []
+    # Take about half of the tasks from parent1
+    for scheduled_task in parent1.scheduled_tasks:
+        if random.random() < 0.5:
+            tasks_from_p1.append(deepcopy(scheduled_task))
     
-    for (day, slot), task in parent2.timetable.items():
-        # Nếu task này chưa có trong lịch trình của con
-        if task not in child_schedule.timetable.values():
-            needed_slots = {(day, slot + i) for i in range(task.duration)}
-            # Nếu vị trí của cha mẹ 2 không bị xung đột
-            if not needed_slots.intersection(occupied_slots):
-                child_schedule.timetable[(day, slot)] = task
-                occupied_slots.update(needed_slots)
+    child.scheduled_tasks = tasks_from_p1
+    
+    # --- Step 2: Build a list of tasks that still need to be scheduled ---
+    scheduled_task_names = {st.task.name for st in child.scheduled_tasks}
+    tasks_to_schedule = [
+        st.task for st in parent2.scheduled_tasks 
+        if st.task.name not in scheduled_task_names
+    ]
+    random.shuffle(tasks_to_schedule)
 
-    # Đảm bảo tất cả task đều được xếp lịch
-    scheduled_tasks = set(child_schedule.timetable.values())
-    missing_tasks = [t for t in child_tasks if t not in scheduled_tasks]
-    if missing_tasks:
-        # Nếu có task bị thiếu, ta khởi tạo lại ngẫu nhiên để đảm bảo tính toàn vẹn
-        return initialize_schedule(child_tasks)
+    # --- Step 3: Repair the child by placing the remaining tasks intelligently ---
+    occupied_slots = {day: [False] * configs.SLOTS_PER_DAY for day in configs.DAYS_OF_WEEK}
+    for st in child.scheduled_tasks:
+        for i in range(st.task.duration):
+            occupied_slots[st.day][st.start_slot + i] = True
+    
+    for task in tasks_to_schedule:
+        spot = find_valid_spot_for_task(task, occupied_slots, blocked_slots)
+        if spot:
+            day, start_slot = spot
+            child.scheduled_tasks.append(ScheduledTask(task=task, day=day, start_slot=start_slot))
+            for i in range(task.duration):
+                occupied_slots[day][start_slot + i] = True
+        else:
+            print(f"Warning (Crossover): Could not place task '{task.name}'.")
 
-    return child_schedule
+    return child
 
-def mutate(schedule: Schedule) -> Schedule:
+
+def mutate(schedule: Schedule, blocked_slots: List[BlockedTimeSlot]) -> Schedule:
     """
-    Đột biến: Tìm một task và chuyển nó đến một vị trí trống khác.
+    Applies a random, valid change to a schedule.
+    It moves a single task to a new, valid random position.
     """
-    if not schedule.timetable:
+    if len(schedule.scheduled_tasks) < 2:
         return schedule
-        
-    # Lấy ngẫu nhiên một task để di chuyển
-    key_to_move = random.choice(list(schedule.timetable.keys()))
-    task_to_move = schedule.timetable.pop(key_to_move)
 
-    # Tìm một vị trí mới
-    # (Đây là phiên bản đơn giản, có thể cải tiến thêm)
-    temp_schedule = initialize_schedule(schedule.tasks)
-    return temp_schedule
+    mutated_schedule = deepcopy(schedule)
+    
+    # 1. Pick a random task to move and remove it
+    task_to_move_idx = random.randrange(len(mutated_schedule.scheduled_tasks))
+    task_to_move = mutated_schedule.scheduled_tasks.pop(task_to_move_idx)
+
+    # 2. Re-build the occupied slots map without the moved task
+    occupied_slots = {day: [False] * configs.SLOTS_PER_DAY for day in configs.DAYS_OF_WEEK}
+    for st in mutated_schedule.scheduled_tasks:
+        for i in range(st.task.duration):
+            occupied_slots[st.day][st.start_slot + i] = True
+
+    # 3. Find a new valid spot for the task
+    spot = find_valid_spot_for_task(task_to_move.task, occupied_slots, blocked_slots)
+
+    if spot:
+        # 4. If a spot is found, add the task back in the new position
+        day, start_slot = spot
+        mutated_schedule.scheduled_tasks.append(ScheduledTask(task=task_to_move.task, day=day, start_slot=start_slot))
+        return mutated_schedule
+    else:
+        # If no new spot could be found, return the original schedule to avoid creating an invalid one
+        return schedule
 
 
-def run_genetic_algorithm(tasks_to_schedule: list[Task], population_size: int, generations: int):
-    """
-    Hàm chính để chạy thuật toán di truyền.
-    """
-    population = [initialize_schedule(tasks_to_schedule) for _ in range(population_size)]
+# ===================================================================
+#
+# SECTION 4: MAIN ALGORITHM LOOP (UPDATED TO PASS BLOCKED_SLOTS)
+#
+# ===================================================================
+
+def run_genetic_algorithm(
+    tasks_to_schedule: List[Task],
+    blocked_slots: List[BlockedTimeSlot],
+    population_size: int,
+    generations: int,
+    mutation_rate: float
+) -> Schedule:
+    """The main function that orchestrates the genetic algorithm."""
+    population = [initialize_schedule(tasks_to_schedule, blocked_slots) for _ in range(population_size)]
 
     for gen in range(generations):
-        # Đánh giá
+        # Evaluation
         for schedule in population:
-            calculate_fitness(schedule)
+            if schedule.fitness == -1.0:
+                calculate_fitness(schedule, blocked_slots)
         
-        # Sắp xếp và giữ lại những cá thể tốt nhất (Elitism)
+        # Elitism
         population.sort(key=lambda s: s.fitness, reverse=True)
-        elitism_count = max(2, int(population_size * 0.1)) # Giữ lại 10% tốt nhất
+        elitism_count = max(2, int(population_size * 0.1))
         next_generation = population[:elitism_count]
         
-        # Tạo ra phần còn lại của thế hệ mới
+        # Reproduction
         selected_parents = selection(population)
         
         while len(next_generation) < population_size:
-            parent1, parent2 = random.sample(selected_parents, 2)
-            child = crossover(parent1, parent2)
-            if random.random() < 0.2: # Tăng xác suất đột biến
-                child = mutate(child)
+            p1, p2 = random.sample(selected_parents, 2)
+            # Pass blocked_slots to crossover
+            child = crossover(p1, p2, blocked_slots) 
+            if random.random() < mutation_rate:
+                # Pass blocked_slots to mutate
+                child = mutate(child, blocked_slots)
+            
+            child.fitness = -1.0
             next_generation.append(child)
         
         population = next_generation
         
-        best_fitness_in_gen = population[0].fitness
-        print(f"Thế hệ {gen + 1}/{generations} - Fitness tốt nhất: {best_fitness_in_gen:.2f}")
+        if (gen + 1) % 10 == 0 or gen == 0:
+            print(f"Thế hệ {gen + 1}/{generations} - Fitness tốt nhất: {population[0].fitness:.2f}")
 
-    # Trả về cá thể tốt nhất cuối cùng
     best_schedule = max(population, key=lambda s: s.fitness)
-    calculate_fitness(best_schedule) # Tính lại fitness lần cuối cho chắc chắn
     return best_schedule
