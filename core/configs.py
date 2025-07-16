@@ -20,7 +20,16 @@ TOTAL_PRIORITY_LEVELS = 5
 # ----------------------------------------------------------------------
 POPULATION_SIZE = 200
 GENERATIONS = 500
-MUTATION_RATE = 0.1
+
+# MUTATION_RATE = 0.1
+# --- Adaptive Rate Parameters ---
+# These constants are used for the adaptive crossover and mutation rates.
+# k1 and k2 should be values between 0.0 and 1.0.
+# A higher k_crossover encourages more mixing of parent genes.
+# A higher k_mutation encourages more random exploration.
+ADAPTIVE_K_CROSSOVER = 0.9
+ADAPTIVE_K_MUTATION = 0.5
+
 
 # ===================== BLOCKED TIME SLOTS =======================
 # Define any time slots that are unavailable for scheduling.

@@ -69,3 +69,29 @@ def find_valid_spot_for_task(
             return day, start_slot
 
     return None # Return None if no valid spot was found
+
+def calculate_adaptive_rate(
+    fitness_value: float,
+    max_fitness: float,
+    avg_fitness: float,
+    k_value: float
+) -> float:
+    """
+    Calculates an adaptive rate for crossover or mutation based on fitness values.
+    This formula is inspired by the work of Srinivas and Patnaik (1994).
+
+    Args:
+        fitness_value: The fitness of the individual chromosome.
+        max_fitness: The maximum fitness in the current population.
+        avg_fitness: The average fitness of the current population.
+        k_value: A constant factor (k1 for crossover, k2 for mutation).
+
+    Returns:
+        The calculated adaptive rate. Returns k_value if the individual is average or below.
+    """
+    if fitness_value > avg_fitness:
+        # For individuals better than average, the rate is lower to preserve good genes.
+        return k_value * (max_fitness - fitness_value) / (max_fitness - avg_fitness)
+    else:
+        # For average or below-average individuals, the rate is higher to encourage exploration.
+        return k_value
