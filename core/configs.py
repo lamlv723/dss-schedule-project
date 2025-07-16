@@ -19,7 +19,7 @@ TOTAL_PRIORITY_LEVELS = 5
 # All tunable parameters for the genetic algorithm are defined here.
 # ----------------------------------------------------------------------
 POPULATION_SIZE = 200
-GENERATIONS = 100
+GENERATIONS = 500
 MUTATION_RATE = 0.1
 
 # ===================== BLOCKED TIME SLOTS =======================
@@ -27,13 +27,13 @@ MUTATION_RATE = 0.1
 # ----------------------------------------------------------------------
 blocked_slots = [
     # Block sleep time from 00:00 to 07:00 every day
-    BlockedTimeSlot(day="Monday", start_time=time(0, 0), end_time=time(7, 0)),
-    BlockedTimeSlot(day="Tuesday", start_time=time(0, 0), end_time=time(7, 0)),
-    BlockedTimeSlot(day="Wednesday", start_time=time(0, 0), end_time=time(7, 0)),
-    BlockedTimeSlot(day="Thursday", start_time=time(0, 0), end_time=time(7, 0)),
-    BlockedTimeSlot(day="Friday", start_time=time(0, 0), end_time=time(7, 0)),
-    BlockedTimeSlot(day="Saturday", start_time=time(0, 0), end_time=time(7, 0)),
-    BlockedTimeSlot(day="Sunday", start_time=time(0, 0), end_time=time(7, 0)),
+    BlockedTimeSlot(day="Monday", start_time=time(0, 0), end_time=time(8, 0)),
+    BlockedTimeSlot(day="Tuesday", start_time=time(0, 0), end_time=time(8, 0)),
+    BlockedTimeSlot(day="Wednesday", start_time=time(0, 0), end_time=time(8, 0)),
+    BlockedTimeSlot(day="Thursday", start_time=time(0, 0), end_time=time(8, 0)),
+    BlockedTimeSlot(day="Friday", start_time=time(0, 0), end_time=time(8, 0)),
+    BlockedTimeSlot(day="Saturday", start_time=time(0, 0), end_time=time(8, 0)),
+    BlockedTimeSlot(day="Sunday", start_time=time(0, 0), end_time=time(8, 0)),
 
     # Block a fixed class on Wednesday evening
     BlockedTimeSlot(day="Wednesday", start_time=time(19, 0), end_time=time(20, 30)),

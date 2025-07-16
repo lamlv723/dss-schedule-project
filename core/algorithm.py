@@ -41,23 +41,49 @@ def initialize_schedule(
 # ===================================================================
 
 def calculate_fitness(schedule: Schedule, blocked_slots: List[BlockedTimeSlot]) -> float:
-    # This function is assumed to be correct from the previous step.
-    # We will refine it later if needed.
-    if not schedule.scheduled_tasks: return 0.0
-    score = 1000.0
+    """
+    Calculates the fitness score of a given schedule based on multiple, refined criteria.
+    - Higher score is better.
+    """
+    if not schedule.scheduled_tasks:
+        return 0.0
+
+    score = 1000.0  # Start with a base score
+    
     sorted_tasks = sorted(schedule.scheduled_tasks, key=lambda x: (configs.DAYS_OF_WEEK.index(x.day), x.start_slot))
-    total_slots = len(configs.DAYS_OF_WEEK) * configs.SLOTS_PER_DAY
+    days_in_schedule = {st.day for st in sorted_tasks}
+    
+    # --- Criterion 1: Priority Weighting (Reward for earliness) ---
+    total_slots_in_week = len(configs.DAYS_OF_WEEK) * configs.SLOTS_PER_DAY
     for st in sorted_tasks:
         priority_weight = (configs.TOTAL_PRIORITY_LEVELS - st.task.priority) ** 2
-        time_bonus = total_slots - (configs.DAYS_OF_WEEK.index(st.day) * configs.SLOTS_PER_DAY + st.start_slot)
-        score += priority_weight * time_bonus * 0.1
+        time_position_score = total_slots_in_week - (configs.DAYS_OF_WEEK.index(st.day) * configs.SLOTS_PER_DAY + st.start_slot)
+        score += priority_weight * time_position_score * 0.5
+
+    # --- Criterion 2: Intra-day Gap Penalty (Penalize gaps within a day) ---
     for i in range(len(sorted_tasks) - 1):
         current_task, next_task = sorted_tasks[i], sorted_tasks[i+1]
         if current_task.day == next_task.day:
             gap = next_task.start_slot - (current_task.start_slot + current_task.task.duration)
-            if gap > 1: score -= gap * 5
-    unique_days_used = len(set(st.day for st in sorted_tasks))
-    if unique_days_used > 1: score -= (unique_days_used - 1) * 100
+            if gap > 1:  # Penalize gaps > 30 minutes
+                score -= gap * 5
+
+    # --- Criterion 3: Day Span Penalty (Penalize using too many days) ---
+    if days_in_schedule:
+        score -= (len(days_in_schedule) - 1) * 100
+        
+    # --- NEW: Criterion 4: Inter-day Gap Penalty (Penalize empty days in between) ---
+    if len(days_in_schedule) > 1:
+        first_day_index = configs.DAYS_OF_WEEK.index(sorted_tasks[0].day)
+        last_day_index = configs.DAYS_OF_WEEK.index(sorted_tasks[-1].day)
+        
+        # Check all the days between the first and the last day of activity
+        for day_index in range(first_day_index + 1, last_day_index):
+            day_name = configs.DAYS_OF_WEEK[day_index]
+            # If a day in the middle has no tasks, apply a penalty
+            if day_name not in days_in_schedule:
+                score -= 75  # A significant penalty for each idle day
+
     schedule.fitness = score
     return score
 
