@@ -1,39 +1,34 @@
 import streamlit as st
-from datetime import time
 import pandas as pd
+from datetime import time, datetime, timedelta
 from streamlit_calendar import calendar
-from datetime import datetime, timedelta
 
 # --- IMPORT CORE MODULE ---
-from core.models import Task, Schedule, BlockedTimeSlot
+from core.models import Task, Schedule, BlockedTimeSlot, ScheduledTask
 from core.algorithm import run_genetic_algorithm
 from core import configs
 
-
-st.set_page_config(layout="wide") # Sử dụng toàn bộ chiều rộng trang
+st.set_page_config(layout="wide")
 
 st.title("Trợ lý Xếp lịch Thông minh 🧠")
 st.write("Ứng dụng này sử dụng Thuật toán Di truyền để tự động tìm kiếm lịch trình tối ưu cho bạn.")
 
 # --- Cấu hình trên Sidebar ---
 st.sidebar.header("⚙️ Cấu hình Thuật toán")
-
+# (Các slider cấu hình của bạn ở đây - không thay đổi)
 population_size = st.sidebar.slider(
     "Kích thước Quần thể (Population Size)", 
     min_value=50, 
     max_value=500, 
     value=configs.POPULATION_SIZE, 
-    step=10,
-    help="Số lượng lịch trình được tạo ra trong mỗi thế hệ. Càng lớn càng có khả năng tìm ra giải pháp tốt hơn, nhưng chạy lâu hơn."
+    step=10
 )
-
 generations = st.sidebar.slider(
     "Số Thế hệ (Generations)", 
     min_value=50, 
     max_value=1000, 
     value=configs.GENERATIONS, 
-    step=20,
-    help="Số vòng lặp 'tiến hóa'. Càng nhiều thế hệ, kết quả càng có thể tốt hơn."
+    step=20
 )
 
 k_crossover = st.sidebar.slider(
@@ -54,16 +49,17 @@ k_mutation = st.sidebar.slider(
     help="Hệ số k cho tỷ lệ đột biến thích ứng."
 )
 
+# --- Khởi tạo Session State ---
+# Cần khởi tạo các key trước để tránh lỗi
+if 'tasks' not in st.session_state:
+    st.session_state.tasks = []
+if 'best_schedule' not in st.session_state:
+    st.session_state.best_schedule = None
 
 # --- Khu vực quản lý công việc ---
 st.header("📝 Danh sách Công việc")
-
-# Khởi tạo danh sách tasks trong session state nếu chưa có
-if 'tasks' not in st.session_state:
-    st.session_state.tasks = []
-
-# Form để thêm công việc mới
 with st.form("new_task_form", clear_on_submit=True):
+    # (Code form thêm task của bạn ở đây - không thay đổi)
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         task_name = st.text_input("Tên công việc")
@@ -82,57 +78,69 @@ with st.form("new_task_form", clear_on_submit=True):
             "priority": priority,
             "is_work_time": is_work_time
         })
+        # Reset lại lịch trình cũ khi có task mới được thêm
+        st.session_state.best_schedule = None
 
-# Hiển thị danh sách công việc hiện tại dưới dạng bảng
+# Hiển thị danh sách công việc hiện tại
 if st.session_state.tasks:
-    df_tasks = pd.DataFrame(st.session_state.tasks)
-    st.dataframe(df_tasks, use_container_width=True)
+    st.dataframe(pd.DataFrame(st.session_state.tasks), use_container_width=True)
 
-# Nút để chạy thuật toán
+
+# --- Nút chạy thuật toán & Logic xử lý ---
 if st.button("Tạo Lịch trình Tối ưu 🚀", type="primary"):
     if not st.session_state.tasks:
         st.warning("Vui lòng thêm ít nhất một công việc để xếp lịch.")
     else:
-        # Chuyển đổi tasks từ session state thành đối tượng Task
         tasks_to_schedule = [Task(**task_data) for task_data in st.session_state.tasks]
-
-        # (Bạn cần import Task và các class khác từ core.models)
-        # (Bạn cần import run_genetic_algorithm từ core.algorithm)
-
         with st.spinner("Thuật toán đang làm việc... Quá trình này có thể mất một lúc... ⏳"):
-            # Gọi thuật toán của bạn
-            # best_schedule = run_genetic_algorithm(...)
-
-            # --- GIẢ LẬP KẾT QUẢ ĐỂ TEST GIAO DIỆN ---
-            # (Sau khi có kết quả thật, bạn sẽ thay thế phần này)
-            from core.models import ScheduledTask, Task, Schedule
-            mock_task_1 = ScheduledTask(task=Task(name="Họp team", duration=2, priority=1), day="Monday", start_slot=18) # 9:00 AM
-            mock_task_2 = ScheduledTask(task=Task(name="Làm việc", duration=4, priority=1), day="Tuesday", start_slot=20) # 10:00 AM
-            best_schedule = Schedule(scheduled_tasks=[mock_task_1, mock_task_2])
-            # --- KẾT THÚC GIẢ LẬP ---
-
+            # CHẠY THUẬT TOÁN THẬT
+            # Ghi đè kết quả vào session_state
+            st.session_state.best_schedule = run_genetic_algorithm(
+                tasks_to_schedule=tasks_to_schedule,
+                population_size=population_size,
+                generations=generations,
+                blocked_slots=configs.blocked_slots
+            )
         st.success("Đã tìm thấy lịch trình tối ưu!")
 
-        # Chuyển đổi kết quả thành định dạng mà calendar component yêu cầu
-        calendar_events = []
-        today = datetime.now()
-        # Tìm ngày thứ Hai của tuần hiện tại để làm mốc
-        start_of_week = today - timedelta(days=today.weekday()) 
+# --- Hiển thị kết quả (LUÔN KIỂM TRA TỪ SESSION STATE) ---
+if st.session_state.best_schedule:
+    st.header("🗓️ Kết quả Lịch trình")
+    
+    calendar_events = []
+    today = datetime.now()
+    start_of_week = today - timedelta(days=today.weekday())
 
-        for stask in best_schedule.scheduled_tasks:
-            day_index = configs.DAYS_OF_WEEK.index(stask.day)
-            task_date = start_of_week + timedelta(days=day_index)
+    for stask in st.session_state.best_schedule.scheduled_tasks:
+        day_index = configs.DAYS_OF_WEEK.index(stask.day)
+        task_date = start_of_week + timedelta(days=day_index)
+        
+        start_time = task_date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(minutes=stask.start_slot * 30)
+        end_time = start_time + timedelta(minutes=stask.task.duration * 30)
 
-            start_time = task_date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(minutes=stask.start_slot * 30)
-            end_time = start_time + timedelta(minutes=stask.task.duration * 30)
+        calendar_events.append({
+            "title": stask.task.name,
+            "start": start_time.isoformat(),
+            "end": end_time.isoformat(),
+            "color": "#FF6B6B" if stask.task.priority == 1 else "#4ECDC4",
+        })
 
-            calendar_events.append({
-                "title": stask.task.name,
-                "start": start_time.isoformat(),
-                "end": end_time.isoformat(),
-                "color": "#FF6B6B" if stask.task.priority == 1 else "#4ECDC4", # Màu sắc theo độ ưu tiên
-            })
-
-        # Hiển thị lịch
-        st.header("🗓️ Kết quả Lịch trình")
-        calendar(events=calendar_events)
+    # Tùy chọn để hiển thị lịch theo định dạng 24 giờ
+    calendar_options = {
+        "headerToolbar": {
+            "left": "prev,next today",
+            "center": "title",
+            "right": "dayGridMonth,timeGridWeek,timeGridDay",
+        },
+        "slotMinTime": "00:00:00",
+        "slotMaxTime": "24:00:00",
+        "initialView": "dayGridMonth", # Chế độ xem mặc định là tuần
+        "allDaySlot": False, # Ẩn dòng "all-day"
+        "eventTimeFormat": { # Định dạng thời gian hiển thị trên sự kiện
+            "hour": "2-digit",
+            "minute": "2-digit",
+            "hour12": False
+        }
+    }
+        
+    calendar(events=calendar_events, options=calendar_options)
