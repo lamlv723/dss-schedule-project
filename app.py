@@ -66,7 +66,7 @@ with st.form("new_task_form", clear_on_submit=True):
     with col2:
         duration = st.number_input("Thời lượng (30 phút/slot)", min_value=1, value=2)
     with col3:
-        priority = st.selectbox("Độ ưu tiên", options=[1, 2, 3, 4], help="1 là ưu tiên cao nhất")
+        priority = st.selectbox("Độ ưu tiên", range(1, configs.TOTAL_PRIORITY_LEVELS + 1), help="1 là ưu tiên cao nhất")
     with col4:
         is_work_time = st.checkbox("Trong giờ làm việc?")
     
@@ -82,9 +82,42 @@ with st.form("new_task_form", clear_on_submit=True):
         st.session_state.best_schedule = None
 
 # Hiển thị danh sách công việc hiện tại
-if st.session_state.tasks:
-    st.dataframe(pd.DataFrame(st.session_state.tasks), use_container_width=True)
+# DF version
+# if st.session_state.tasks:
+#     st.dataframe(pd.DataFrame(st.session_state.tasks), use_container_width=True)
 
+# Hiển thị danh sách công việc hiện tại dưới dạng bảng có thể chỉnh sửa
+if st.session_state.tasks:
+    st.write("### Danh sách công việc hiện tại")
+    # Chuyển đổi list of dicts thành DataFrame
+    df_tasks = pd.DataFrame(st.session_state.tasks)
+    
+    # Thêm một cột 'delete' với giá trị mặc định là False
+    df_tasks['delete'] = False
+    
+    # Sử dụng st.data_editor để tạo bảng có thể tương tác
+    edited_df = st.data_editor(
+        df_tasks,
+        column_config={
+            "name": st.column_config.TextColumn("Tên công việc"),
+            "duration": st.column_config.NumberColumn("Thời lượng (slots)"),
+            "priority": st.column_config.SelectboxColumn("Độ ưu tiên", options=range(1, configs.TOTAL_PRIORITY_LEVELS + 1)),
+            "is_work_time": st.column_config.CheckboxColumn("Trong giờ?"),
+            "delete": st.column_config.CheckboxColumn("Xóa?") # Cột để chọn xóa
+        },
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    # Nút để xác nhận việc xóa
+    if st.button("Cập nhật danh sách công việc"):
+        # Lọc ra những hàng không được đánh dấu xóa
+        remaining_tasks_df = edited_df[edited_df["delete"] == False]
+        # Chuyển DataFrame trở lại thành list of dicts và cập nhật session_state
+        st.session_state.tasks = remaining_tasks_df.drop(columns=['delete']).to_dict('records')
+        # Reset lại lịch trình cũ vì danh sách task đã thay đổi
+        st.session_state.best_schedule = None
+        st.rerun() # Chạy lại app để cập nhật bảng
 
 # --- Nút chạy thuật toán & Logic xử lý ---
 if st.button("Tạo Lịch trình Tối ưu 🚀", type="primary"):
