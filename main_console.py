@@ -1,14 +1,41 @@
-from core.models import Task, WORKING_DAYS
 from core.algorithm import run_genetic_algorithm
+from core.models import Schedule, Task
+# Import all configurations from the config file
+from core import configs
 
-# --- Các tham số cho thuật toán ---
-POPULATION_SIZE = 200   # Số lượng lịch trình trong một quần thể
-GENERATIONS = 100      # Số thế hệ sẽ "tiến hóa"
-MUTATION_RATE = 0.2  # Tỷ lệ đột biến trong thuật toán di truyền
+# Helper function to print the schedule (you can customize this)
+def print_schedule(schedule: Schedule):
+    if not schedule.scheduled_tasks:
+        print("Lịch trình trống.")
+        return
 
-if __name__ == "__main__":
+    # Sort tasks by start time for chronological printing
+    sorted_tasks = sorted(schedule.scheduled_tasks, key=lambda x: (configs.DAYS_OF_WEEK.index(x.day), x.start_slot))
 
-    all_tasks = [
+    current_day = ""
+    for scheduled_task in sorted_tasks:
+        if scheduled_task.day != current_day:
+            current_day = scheduled_task.day
+            print(f"\n--- {current_day} ---")
+
+        start_minutes = scheduled_task.start_slot * 30
+        end_minutes = start_minutes + scheduled_task.task.duration * 30
+        start_time_str = f"{start_minutes // 60:02d}:{start_minutes % 60:02d}"
+        end_time_str = f"{end_minutes // 60:02d}:{end_minutes % 60:02d}"
+
+        time_type = "(Trong giờ)" if scheduled_task.task.is_work_time else "(Ngoài giờ)"
+        print(f"[{start_time_str} - {end_time_str}] {time_type} -> {scheduled_task.task.name}")
+
+    print(f"\n>>> ĐIỂM FITNESS CUỐI CÙNG: {schedule.fitness:.2f}")
+
+
+def main():
+    """
+    Main entry point for the scheduling application.
+    This is where you define the INPUT (the list of tasks) and run the algorithm.
+    """
+    # ======================== TASK DEFINITIONS (INPUT) ========================
+    tasks_to_schedule = [
         # --- Công việc ưu tiên cao (Dự án Alpha) ---
         Task(name="[Alpha] Lên kế hoạch các mốc quan trọng", duration=2, priority=1, is_work_time=True),
         Task(name="[Alpha] Phát triển tính năng cốt lõi", duration=6, priority=1, is_work_time=True),
@@ -33,31 +60,23 @@ if __name__ == "__main__":
         Task(name="Đọc sách", duration=2, priority=4),
     ]
 
-    print("--- BẮT ĐẦU QUÁ TRÌNH TIẾN HÓA ---")
-    best_schedule_found = run_genetic_algorithm(
-        tasks_to_schedule=all_tasks,
-        population_size=POPULATION_SIZE,
-        generations=GENERATIONS,
-        mutation_rate=MUTATION_RATE
+    print("--- BẮT ĐẦU THUẬT TOÁN XẾP LỊCH ---")
+    print(f"Tổng số công việc cần xếp: {len(tasks_to_schedule)}")
+    
+    # The algorithm now implicitly uses constants from the configs file
+    best_schedule = run_genetic_algorithm(
+        tasks_to_schedule=tasks_to_schedule,
+        population_size=configs.POPULATION_SIZE,
+        generations=configs.GENERATIONS,
+        mutation_rate=configs.MUTATION_RATE,
+        blocked_slots=configs.blocked_slots # Pass blocked_slots to the algorithm
     )
 
-    print("\n--- LỊCH TRÌNH TỐI ƯU NHẤT ĐƯỢC TÌM THẤY ---")
+    print("\n--- HOÀN TẤT ---")
+    if best_schedule:
+        print_schedule(best_schedule)
+    else:
+        print("Không tìm thấy lịch trình phù hợp.")
 
-    sorted_items = sorted(best_schedule_found.timetable.items())
-    
-    for (day_idx, start_slot_idx), task in sorted_items:
-        day_name = WORKING_DAYS[day_idx]
-        
-        start_hour = start_slot_idx // 2
-        start_minute = (start_slot_idx % 2) * 30
-        
-        end_slot_idx = start_slot_idx + task.duration
-        end_hour = end_slot_idx // 2
-        end_minute = (end_slot_idx % 2) * 30
-        
-        task_type = "Trong giờ" if task.is_work_time else "Ngoài giờ"
-        print(
-            f"[{day_name}] ({task_type}) {start_hour:02d}:{start_minute:02d} - {end_hour:02d}:{end_minute:02d} -> {task.name}"
-        )
-
-    print(f"\n>>> ĐIỂM FITNESS CUỐI CÙNG: {best_schedule_found.fitness:.2f}")
+if __name__ == "__main__":
+    main()
