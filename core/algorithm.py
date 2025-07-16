@@ -1,208 +1,160 @@
 import random
-from typing import List, Tuple
+from typing import List
 from copy import deepcopy
 
-# Import utilities, models, and the updated configs
-from .utils import is_timeslot_blocked, time_to_slot
+# Import utilities, models, and configs
+from .utils import is_timeslot_blocked, time_to_slot, find_valid_spot_for_task
 from .models import Task, Schedule, BlockedTimeSlot, ScheduledTask
 from . import configs
 
 # ===================================================================
 #
-# SECTION 1: INITIALIZATION
+# SECTION 1: INITIALIZATION & MUTATION (LOGIC REFINED)
 #
 # ===================================================================
-
 def initialize_schedule(
     tasks_to_schedule: List[Task],
     blocked_slots: List[BlockedTimeSlot]
 ) -> Schedule:
-    """
-    Creates a single, new, randomly-generated schedule.
-    This function ensures the initial schedule is valid by respecting
-    task overlaps, work hours, and blocked time slots.
-    """
+    """Creates a single, new, randomly-generated, and valid schedule."""
     new_schedule = Schedule()
     tasks = deepcopy(tasks_to_schedule)
     random.shuffle(tasks)
-
     occupied_slots = {day: [False] * configs.SLOTS_PER_DAY for day in configs.DAYS_OF_WEEK}
 
-    work_start_slot = time_to_slot(configs.WORK_START_TIME)
-    work_end_slot = time_to_slot(configs.WORK_END_TIME)
-
     for task in tasks:
-        placed = False
-        # Try to place the task for a limited number of attempts to avoid infinite loops
-        for _ in range(1000):
-            day = random.choice(configs.DAYS_OF_WEEK)
-            
-            if task.is_work_time:
-                if work_end_slot - work_start_slot < task.duration: continue
-                start_slot = random.randint(work_start_slot, work_end_slot - task.duration)
-            else:
-                start_slot = random.randint(0, configs.SLOTS_PER_DAY - task.duration)
-
-            is_occupied = any(occupied_slots[day][start_slot + i] for i in range(task.duration))
-            if is_occupied or is_timeslot_blocked(day, start_slot, task.duration, blocked_slots):
-                continue
-
-            scheduled_task = ScheduledTask(task=task, day=day, start_slot=start_slot)
-            new_schedule.scheduled_tasks.append(scheduled_task)
+        spot = find_valid_spot_for_task(task, occupied_slots, blocked_slots)
+        if spot:
+            day, start_slot = spot
+            new_schedule.scheduled_tasks.append(ScheduledTask(task=task, day=day, start_slot=start_slot))
             for i in range(task.duration):
                 occupied_slots[day][start_slot + i] = True
+        else:
+            print(f"Warning (Initialization): Could not place task '{task.name}'.")
             
-            placed = True
-            break
-        
-        if not placed:
-            # Handle cases where a task cannot be placed (e.g., not enough free time)
-            # For simplicity, we are just noting it here. A more robust solution might raise an error.
-            print(f"Warning: Could not place task '{task.name}'. It might be too long or the schedule is too constrained.")
-
     return new_schedule
 
 # ===================================================================
 #
-# SECTION 2: FITNESS CALCULATION (REWRITTEN)
+# SECTION 2: FITNESS CALCULATION (UNCHANGED)
 #
 # ===================================================================
 
 def calculate_fitness(schedule: Schedule, blocked_slots: List[BlockedTimeSlot]) -> float:
-    """
-    Calculates the fitness score of a given schedule based on multiple criteria.
-    - Higher score is better.
-    - This is the core logic that guides the evolution process.
-    """
-    if not schedule.scheduled_tasks:
-        return 0.0
-
-    score = 1000.0  # Start with a base score to subtract penalties from
-    
-    # Sort tasks for easier processing of gaps and day spans
+    # This function is assumed to be correct from the previous step.
+    # We will refine it later if needed.
+    if not schedule.scheduled_tasks: return 0.0
+    score = 1000.0
     sorted_tasks = sorted(schedule.scheduled_tasks, key=lambda x: (configs.DAYS_OF_WEEK.index(x.day), x.start_slot))
-
-    # --- Criterion 1: Priority Weighting ---
-    # Heavily reward scheduling high-priority tasks early.
     total_slots = len(configs.DAYS_OF_WEEK) * configs.SLOTS_PER_DAY
     for st in sorted_tasks:
-        priority_weight = (configs.TOTAL_PRIORITY_LEVELS - st.task.priority) ** 2  # Exponential weight
+        priority_weight = (configs.TOTAL_PRIORITY_LEVELS - st.task.priority) ** 2
         time_bonus = total_slots - (configs.DAYS_OF_WEEK.index(st.day) * configs.SLOTS_PER_DAY + st.start_slot)
         score += priority_weight * time_bonus * 0.1
-
-    # --- Criterion 2: Gap Penalty ---
-    # Penalize for gaps between tasks on the same day > 30 mins.
     for i in range(len(sorted_tasks) - 1):
-        current_task = sorted_tasks[i]
-        next_task = sorted_tasks[i+1]
+        current_task, next_task = sorted_tasks[i], sorted_tasks[i+1]
         if current_task.day == next_task.day:
             gap = next_task.start_slot - (current_task.start_slot + current_task.task.duration)
-            if gap > 1:  # Penalize gaps > 1 slot (30 minutes)
-                score -= gap * 5 # A moderate penalty for each empty slot
-
-    # --- Criterion 3: Day Spill-over Penalty ---
-    # Penalize for using more days than necessary.
+            if gap > 1: score -= gap * 5
     unique_days_used = len(set(st.day for st in sorted_tasks))
-    if unique_days_used > 1:
-        score -= (unique_days_used - 1) * 100 # Heavy penalty for each extra day
-
+    if unique_days_used > 1: score -= (unique_days_used - 1) * 100
     schedule.fitness = score
     return score
 
 # ===================================================================
 #
-# SECTION 3: GENETIC OPERATORS (REWRITTEN)
+# SECTION 3: GENETIC OPERATORS (CROSSOVER REPLACED, MUTATE REFINED)
 #
 # ===================================================================
 
 def selection(population: List[Schedule]) -> List[Schedule]:
-    """
-    Selects the best individuals from the population to be parents for the next generation.
-    Uses Tournament Selection.
-    """
+    """Selects parents using Tournament Selection."""
     selected = []
-    pop_size = len(population)
-    for _ in range(pop_size):
-        tournament_size = max(2, int(pop_size * 0.05))
-        participants = random.sample(population, tournament_size)
+    for _ in range(len(population)):
+        participants = random.sample(population, k=max(2, int(len(population) * 0.05)))
         winner = max(participants, key=lambda s: s.fitness)
         selected.append(winner)
     return selected
 
-def crossover(parent1: Schedule, parent2: Schedule) -> Schedule:
+def crossover(parent1: Schedule, parent2: Schedule, blocked_slots: List[BlockedTimeSlot]) -> Schedule:
     """
-    Combines two parent schedules to create a child schedule.
-    This version uses a simple single-point crossover on the list of scheduled tasks.
+    Creates a new, valid child schedule by combining two parents.
+    This is an advanced crossover operator with a repair mechanism.
     """
     child = Schedule()
-    # Ensure tasks are in a consistent order before crossover
-    p1_tasks = sorted(parent1.scheduled_tasks, key=lambda x: x.task.name)
-    p2_tasks = sorted(parent2.scheduled_tasks, key=lambda x: x.task.name)
+    
+    # --- Step 1: Inherit a valid subset of tasks from Parent 1 ---
+    tasks_from_p1 = []
+    # Take about half of the tasks from parent1
+    for scheduled_task in parent1.scheduled_tasks:
+        if random.random() < 0.5:
+            tasks_from_p1.append(deepcopy(scheduled_task))
+    
+    child.scheduled_tasks = tasks_from_p1
+    
+    # --- Step 2: Build a list of tasks that still need to be scheduled ---
+    scheduled_task_names = {st.task.name for st in child.scheduled_tasks}
+    tasks_to_schedule = [
+        st.task for st in parent2.scheduled_tasks 
+        if st.task.name not in scheduled_task_names
+    ]
+    random.shuffle(tasks_to_schedule)
 
-    crossover_point = random.randint(1, len(p1_tasks) - 1)
+    # --- Step 3: Repair the child by placing the remaining tasks intelligently ---
+    occupied_slots = {day: [False] * configs.SLOTS_PER_DAY for day in configs.DAYS_OF_WEEK}
+    for st in child.scheduled_tasks:
+        for i in range(st.task.duration):
+            occupied_slots[st.day][st.start_slot + i] = True
     
-    # Take the first part from parent1 and the second from parent2
-    child.scheduled_tasks = deepcopy(p1_tasks[:crossover_point]) + deepcopy(p2_tasks[crossover_point:])
-    
-    # Basic conflict resolution: If tasks overlap, the schedule's fitness will be very low,
-    # and it will likely be eliminated by natural selection. A more advanced crossover
-    # would involve a repair mechanism here.
+    for task in tasks_to_schedule:
+        spot = find_valid_spot_for_task(task, occupied_slots, blocked_slots)
+        if spot:
+            day, start_slot = spot
+            child.scheduled_tasks.append(ScheduledTask(task=task, day=day, start_slot=start_slot))
+            for i in range(task.duration):
+                occupied_slots[day][start_slot + i] = True
+        else:
+            print(f"Warning (Crossover): Could not place task '{task.name}'.")
+
     return child
+
 
 def mutate(schedule: Schedule, blocked_slots: List[BlockedTimeSlot]) -> Schedule:
     """
-    Applies a random change to a schedule to introduce new genetic material.
-    This mutation respects all placement rules (work hours, no overlaps, no blocked slots).
+    Applies a random, valid change to a schedule.
+    It moves a single task to a new, valid random position.
     """
-    if not schedule.scheduled_tasks:
+    if len(schedule.scheduled_tasks) < 2:
         return schedule
 
     mutated_schedule = deepcopy(schedule)
     
-    # Choose a random task to move
+    # 1. Pick a random task to move and remove it
     task_to_move_idx = random.randrange(len(mutated_schedule.scheduled_tasks))
     task_to_move = mutated_schedule.scheduled_tasks.pop(task_to_move_idx)
 
-    # Re-build the occupied slots map for the schedule *without* the task to move
+    # 2. Re-build the occupied slots map without the moved task
     occupied_slots = {day: [False] * configs.SLOTS_PER_DAY for day in configs.DAYS_OF_WEEK}
     for st in mutated_schedule.scheduled_tasks:
         for i in range(st.task.duration):
             occupied_slots[st.day][st.start_slot + i] = True
 
-    # Find a new valid position for the moved task (similar to initialize)
-    work_start_slot = time_to_slot(configs.WORK_START_TIME)
-    work_end_slot = time_to_slot(configs.WORK_END_TIME)
-    
-    placed = False
-    for _ in range(500): # Try 500 times to find a new spot
-        day = random.choice(configs.DAYS_OF_WEEK)
-        
-        if task_to_move.task.is_work_time:
-            if work_end_slot - work_start_slot < task_to_move.task.duration: continue
-            start_slot = random.randint(work_start_slot, work_end_slot - task_to_move.task.duration)
-        else:
-            start_slot = random.randint(0, configs.SLOTS_PER_DAY - task_to_move.task.duration)
+    # 3. Find a new valid spot for the task
+    spot = find_valid_spot_for_task(task_to_move.task, occupied_slots, blocked_slots)
 
-        is_occupied = any(occupied_slots[day][start_slot + i] for i in range(task_to_move.task.duration))
-        if is_occupied or is_timeslot_blocked(day, start_slot, task_to_move.task.duration, blocked_slots):
-            continue
-
-        # Place the task in its new valid spot
-        task_to_move.day = day
-        task_to_move.start_slot = start_slot
-        mutated_schedule.scheduled_tasks.append(task_to_move)
-        placed = True
-        break
-
-    if not placed:
-        # If a new spot couldn't be found, return the original, un-mutated schedule
+    if spot:
+        # 4. If a spot is found, add the task back in the new position
+        day, start_slot = spot
+        mutated_schedule.scheduled_tasks.append(ScheduledTask(task=task_to_move.task, day=day, start_slot=start_slot))
+        return mutated_schedule
+    else:
+        # If no new spot could be found, return the original schedule to avoid creating an invalid one
         return schedule
-        
-    return mutated_schedule
+
 
 # ===================================================================
 #
-# SECTION 4: MAIN ALGORITHM LOOP
+# SECTION 4: MAIN ALGORITHM LOOP (UPDATED TO PASS BLOCKED_SLOTS)
 #
 # ===================================================================
 
@@ -213,45 +165,38 @@ def run_genetic_algorithm(
     generations: int,
     mutation_rate: float
 ) -> Schedule:
-    """
-    The main function that orchestrates the genetic algorithm.
-    """
-    # Initialize the population
+    """The main function that orchestrates the genetic algorithm."""
     population = [initialize_schedule(tasks_to_schedule, blocked_slots) for _ in range(population_size)]
 
     for gen in range(generations):
-        # --- Evaluation ---
-        # Calculate fitness for each schedule that hasn't been evaluated yet
+        # Evaluation
         for schedule in population:
-            if schedule.fitness == -1.0: # Only calculate if not already set
+            if schedule.fitness == -1.0:
                 calculate_fitness(schedule, blocked_slots)
         
-        # --- Elitism ---
-        # Sort the population by fitness (higher is better) and keep the top 10%
+        # Elitism
         population.sort(key=lambda s: s.fitness, reverse=True)
         elitism_count = max(2, int(population_size * 0.1))
         next_generation = population[:elitism_count]
         
-        # --- Reproduction ---
-        # Select parents for the new generation
+        # Reproduction
         selected_parents = selection(population)
         
-        # Create new individuals (children)
         while len(next_generation) < population_size:
             p1, p2 = random.sample(selected_parents, 2)
-            child = crossover(p1, p2)
+            # Pass blocked_slots to crossover
+            child = crossover(p1, p2, blocked_slots) 
             if random.random() < mutation_rate:
+                # Pass blocked_slots to mutate
                 child = mutate(child, blocked_slots)
             
-            # The child's fitness needs to be recalculated
             child.fitness = -1.0
             next_generation.append(child)
         
         population = next_generation
         
-        best_fitness_in_gen = population[0].fitness
-        print(f"Thế hệ {gen + 1}/{generations} - Fitness tốt nhất: {best_fitness_in_gen:.2f}")
+        if (gen + 1) % 10 == 0 or gen == 0:
+            print(f"Thế hệ {gen + 1}/{generations} - Fitness tốt nhất: {population[0].fitness:.2f}")
 
-    # Return the best individual from the final population
     best_schedule = max(population, key=lambda s: s.fitness)
     return best_schedule
