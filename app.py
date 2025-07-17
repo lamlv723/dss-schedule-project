@@ -167,7 +167,7 @@ if st.session_state.best_schedule:
         },
         "slotMinTime": "00:00:00",
         "slotMaxTime": "24:00:00",
-        "initialView": "dayGridMonth", # Chế độ xem mặc định là tuần
+        "initialView": "timeGridWeek", # Chế độ xem mặc định là tuần
         "allDaySlot": False, # Ẩn dòng "all-day"
         "eventTimeFormat": { # Định dạng thời gian hiển thị trên sự kiện
             "hour": "2-digit",
