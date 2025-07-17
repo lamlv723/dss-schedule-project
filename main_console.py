@@ -68,7 +68,7 @@ def main():
         tasks_to_schedule=tasks_to_schedule,
         population_size=configs.POPULATION_SIZE,
         generations=configs.GENERATIONS,
-        mutation_rate=configs.MUTATION_RATE,
+        # mutation_rate=configs.MUTATION_RATE,
         blocked_slots=configs.blocked_slots # Pass blocked_slots to the algorithm
     )
 
