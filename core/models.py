@@ -1,65 +1,72 @@
 from dataclasses import dataclass, field
-from datetime import time
-from typing import List
+from typing import List, Optional
 
-# This file exclusively contains data class definitions for the project's core objects.
-# It does not hold any configuration constants, which are now located in config.py.
+# This file defines the data structures for the application using Python's
+# built-in dataclasses. This approach is lightweight and perfect for
+# applications that do not require a database for persistence.
 
 @dataclass
 class Task:
     """
-    Represents a single task to be scheduled.
-    Using @dataclass to auto-generate __init__, __eq__, etc.
+    Represents a task definition or a template for a task.
+    This is the "blueprint" of a task, defined by the user.
     """
+    # A unique identifier for the task, can be its name or a generated ID.
     name: str
-    duration: int
-    priority: int = 1
-    is_work_time: bool = False
-
-    def __repr__(self) -> str:
-        """
-        Provides a custom, user-defined string representation for the Task object.
-        This method is preserved and overrides the default __repr__ from @dataclass.
-        """
-        time_type = "Trong giờ" if self.is_work_time else "Ngoài giờ"
-        return f"Task(Tên: {self.name}, Thời lượng: {self.duration} slot, Loại: {time_type})"
-
-@dataclass
-class ScheduledTask:
-    """
-    Represents a task that has been placed into the schedule.
-    It links a Task to a specific day and start time.
-    """
-    task: Task
-    day: str
-    start_slot: int
-
-@dataclass
-class Schedule:
-    """
-    Represents a complete schedule, which is a collection of ScheduledTask objects.
-    This is equivalent to a "chromosome" in the genetic algorithm.
-    """
-    # A schedule is defined by the list of tasks placed within it.
-    scheduled_tasks: List[ScheduledTask] = field(default_factory=list)
     
-    # The fitness score is calculated and assigned by the algorithm.
-    fitness: float = -1.0
-
-    def __repr__(self) -> str:
-        """
-
-        Provides a simple representation of the Schedule, showing only its fitness score.
-        This method is preserved and overrides the default __repr__ from @dataclass.
-        """
-        return f"Schedule(Fitness: {self.fitness:.2f})"
+    # The duration of the task in minutes.
+    duration: int
+    
+    # The priority level of the task (e.g., 1-5, where 5 is the highest).
+    priority: int = 1
+    
+    # The number of times this task should appear in the schedule.
+    frequency: int = 1
+    
+    # For tasks generated from frequency > 1, this stores the original task's name.
+    parent_task: Optional[str] = None
 
 @dataclass
 class BlockedTimeSlot:
     """
-    Represents a period of time that is unavailable for scheduling.
-    The algorithm will not be allowed to place any tasks within this slot.
+    Represents a time slot that is unavailable for scheduling.
+    Used for fixed events like lunch, sleep, or appointments.
     """
-    day: str
-    start_time: time
-    end_time: time
+    # A descriptive name for the blocked slot (e.g., "Lunch Break").
+    reason: str
+
+    # The day of the week for the blocked slot (0 for Monday, etc.).
+    day: int
+
+    # The starting time slot to block.
+    start_time: int
+    
+    # The ending time slot to block.
+    end_time: int
+
+
+@dataclass
+class ScheduledTask:
+    """
+    Represents a specific instance of a Task that has been placed on the schedule.
+    This is the actual "event" in the calendar.
+    """
+    # The original task object that this event is based on.
+    task: Task
+    
+    # The day in the schedule where the task is placed (0 for Monday, etc.).
+    day: int
+    
+    # The starting time slot for the task on the specified day.
+    start_time: int
+
+
+@dataclass
+class Schedule:
+    """
+    Represents a single, complete schedule for a given period (e.g., a week).
+    It acts as a container for all the 'ScheduledTask' instances.
+    """
+    # A list of all tasks that have been successfully placed on this schedule.
+    # It defaults to an empty list when a new Schedule is created.
+    scheduled_tasks: List[ScheduledTask] = field(default_factory=list)
