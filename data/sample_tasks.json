@@ -1,0 +1,89 @@
+[
+    {
+        "id": 1,
+        "name": "Soạn báo cáo tuần",
+        "estimated_time": 4,
+        "priority": 1,
+        "category": "Công việc",
+        "deadline": "2025-07-25T17:00:00"
+    },
+    {
+        "id": 2,
+        "name": "Chuẩn bị bài thuyết trình",
+        "estimated_time": 3,
+        "priority": 1,
+        "category": "Công việc"
+    },
+    {
+        "id": 3,
+        "name": "Họp nhóm dự án",
+        "estimated_time": 2,
+        "priority": 1,
+        "category": "Công việc",
+        "predecessor_task_id": 2
+    },
+    {
+        "id": 4,
+        "name": "Đi tập gym",
+        "estimated_time": 3,
+        "priority": 2,
+        "category": "Sức khỏe"
+    },
+    {
+        "id": 5,
+        "name": "Học khóa học Python online",
+        "estimated_time": 4,
+        "priority": 2,
+        "category": "Học tập"
+    },
+    {
+        "id": 6,
+        "name": "Trả lời các email quan trọng",
+        "estimated_time": 2,
+        "priority": 2,
+        "category": "Công việc"
+    },
+    {
+        "id": 7,
+        "name": "Dọn dẹp nhà cửa",
+        "estimated_time": 4,
+        "priority": 3,
+        "category": "Việc nhà"
+    },
+    {
+        "id": 8,
+        "name": "Đi mua sắm thực phẩm",
+        "estimated_time": 3,
+        "priority": 3,
+        "category": "Việc nhà"
+    },
+    {
+        "id": 9,
+        "name": "Gọi điện cho gia đình",
+        "estimated_time": 1,
+        "priority": 2,
+        "category": "Cá nhân"
+    },
+    {
+        "id": 10,
+        "name": "Đọc sách kỹ thuật",
+        "estimated_time": 2,
+        "priority": 3,
+        "category": "Học tập"
+    },
+    {
+        "id": 11,
+        "name": "Chạy bộ buổi sáng",
+        "estimated_time": 2,
+        "priority": 2,
+        "category": "Sức khỏe",
+        "earliest_start_time": "2025-07-24T06:00:00"
+    },
+    {
+        "id": 12,
+        "name": "Lên kế hoạch du lịch cuối tuần",
+        "estimated_time": 2,
+        "priority": 3,
+        "category": "Cá nhân"
+    }
+]
