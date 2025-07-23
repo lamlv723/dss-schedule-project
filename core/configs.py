@@ -6,7 +6,7 @@ from . import utils # Import the entire utils module
 # --- Genetic Algorithm Parameters ---
 POPULATION_SIZE: int = 50
 NUM_GENERATIONS: int = 100
-MUTATION_RATE: float = 0.01
+MUTATION_RATE: float = 0.1
 
 # --- Schedule-related Constants ---
 DAYS_IN_SCHEDULE: int = 7
