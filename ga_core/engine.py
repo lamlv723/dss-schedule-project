@@ -64,7 +64,7 @@ def run_ga_optimization(tasks_map, task_instances, blocked_slots, progress_callb
         logbook.record(gen=gen + 1, **record)
         
         progress_value = (gen + 1) / ga_config.N_GENERATIONS
-        # <<< FIX: Hiển thị điểm 'max' vì đây là bài toán tối đa hóa
+
         best_score = record.get('max', 0.0)
         progress_callback(progress_value, f"Generation {gen + 1}/{ga_config.N_GENERATIONS} - Best Score: {best_score:.4f}")
 

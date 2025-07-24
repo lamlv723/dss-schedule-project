@@ -77,7 +77,7 @@
         "estimated_time": 2,
         "priority": 2,
         "category": "Sức khỏe",
-        "earliest_start_time": "2025-07-28T06:00:00"
+        "earliest_start_time": "2025-07-24T06:00:00"
     },
     {
         "id": 12,
@@ -85,72 +85,5 @@
         "estimated_time": 2,
         "priority": 3,
         "category": "Cá nhân"
-    },
-    {
-        "id": 13,
-        "name": "Review Pull Request của đồng nghiệp",
-        "estimated_time": 2,
-        "priority": 1,
-        "category": "Công việc"
-    },
-    {
-        "id": 14,
-        "name": "Họp 1-1 với quản lý",
-        "estimated_time": 1,
-        "priority": 1,
-        "category": "Công việc",
-        "earliest_start_time": "2025-07-29T14:00:00"
-    },
-    {
-        "id": 15,
-        "name": "Thanh toán hóa đơn điện/nước/internet",
-        "estimated_time": 1,
-        "priority": 1,
-        "category": "Tài chính",
-        "deadline": "2025-07-30T23:59:00"
-    },
-    {
-        "id": 16,
-        "name": "Lên kế hoạch công việc tuần tới",
-        "estimated_time": 3,
-        "priority": 2,
-        "category": "Công việc",
-        "predecessor_task_id": 1
-    },
-    {
-        "id": 17,
-        "name": "Đi khám sức khỏe định kỳ",
-        "estimated_time": 4,
-        "priority": 1,
-        "category": "Sức khỏe",
-        "earliest_start_time": "2025-07-30T08:00:00"
-    },
-    {
-        "id": 18,
-        "name": "Cập nhật tài liệu dự án",
-        "estimated_time": 5,
-        "priority": 3,
-        "category": "Công việc"
-    },
-    {
-        "id": 19,
-        "name": "Cà phê với bạn bè",
-        "estimated_time": 4,
-        "priority": 2,
-        "category": "Cá nhân"
-    },
-    {
-        "id": 20,
-        "name": "Xem lại ngân sách chi tiêu tháng",
-        "estimated_time": 2,
-        "priority": 2,
-        "category": "Tài chính"
-    },
-    {
-        "id": 21,
-        "name": "Giặt và phơi quần áo",
-        "estimated_time": 3,
-        "priority": 3,
-        "category": "Việc nhà"
     }
 ]
