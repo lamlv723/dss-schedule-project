@@ -165,12 +165,12 @@ def main() -> None:
 
         st.divider()
         
-        # st.button("+ Thêm công việc mới", on_click=add_task, use_container_width=True)
-        col1, col2 = st.columns(2)
-        with col1:
-            st.button("+ Thêm công việc mới", on_click=add_task, use_container_width=True)
-        with col2:
-            st.button("Sử dụng các công việc đã nhập", type="primary", use_container_width=True, on_click=set_source_to_manual)
+        st.button("+ Thêm công việc mới", on_click=add_task, use_container_width=True)
+        # col1, col2 = st.columns(2)
+        # with col1:
+        #     st.button("+ Thêm công việc mới", on_click=add_task, use_container_width=True)
+        # with col2:
+        #     st.button("Sử dụng các công việc đã nhập", type="primary", use_container_width=True, on_click=set_source_to_manual)
 
     # --- Task Loading Logic ---
     tasks: Optional[List[Dict[str, Any]]] = None
@@ -223,7 +223,7 @@ def main() -> None:
             final_tasks_for_ga.append(processed_task)
         
         st.header("Các công việc cần sắp xếp")
-        st.dataframe(pd.DataFrame(final_tasks_for_ga), use_container_width=True)
+        st.dataframe(pd.DataFrame(final_tasks_for_ga), use_container_width=True, hide_index=True)
     
         if st.button("Tạo Lịch Trình", type="primary", use_container_width=True):
             if final_tasks_for_ga:
