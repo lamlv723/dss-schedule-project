@@ -31,12 +31,6 @@ pip install -r requirements.txt
 
 ### 3\. Chạy ứng dụng
 
-  * **Chạy trên giao diện dòng lệnh (Console):**
-
-    ```bash
-    python main_console.py
-    ```
-
   * **Chạy trên giao diện web (Streamlit):**
 
     ```bash
