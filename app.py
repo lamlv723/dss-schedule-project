@@ -1,5 +1,3 @@
-# app.py
-
 import streamlit as st
 import pandas as pd
 import json
@@ -24,35 +22,42 @@ def string_to_date_obj(date_str: Optional[str]) -> Optional[datetime.date]:
         return None
 
 def initialize_session_state() -> None:
-    """Initializes the session state for storing tasks if it doesn't exist."""
+    """Initializes the session state for storing tasks and app state if it doesn't exist."""
     if 'tasks' not in st.session_state:
         st.session_state.tasks: List[Dict[str, Any]] = [
-            {
-                "id": 1, 
-                "name": "Soạn báo cáo tuần", 
-                "estimated_time_hr": 2.0, 
-                "priority": 1, 
-                "category": "Công việc",
-                "predecessor_task_id": None,
-                "deadline": "2025-07-28",
-                "earliest_start_time": "2025-07-25"
-            }
+            {"id": 1, "name": "Soạn báo cáo tuần", "estimated_time_hr": 2.0, "priority": 1, "category": "Công việc",
+             "predecessor_task_id": None, "deadline": "2025-07-28", "earliest_start_time": "2025-07-25"}
         ]
+    
+    # <<< FIX: Initialize the active data source state
+    if 'active_data_source' not in st.session_state:
+        st.session_state.active_data_source: str = 'sample' # 'sample', 'upload', or 'manual'
+    
+    if 'uploaded_tasks' not in st.session_state:
+        st.session_state.uploaded_tasks: Optional[List[Dict[str, Any]]] = None
 
 def add_task() -> None:
-    """Adds a new, empty task to the session state."""
+    """Adds a new, empty task and sets the data source to manual."""
     max_id = max([task['id'] for task in st.session_state.tasks] or [0])
     new_task_id = max_id + 1
     st.session_state.tasks.append({
         "id": new_task_id, "name": "", "estimated_time_hr": 1.0, "priority": 3, "category": "",
         "predecessor_task_id": None, "deadline": None, "earliest_start_time": None
     })
+    # <<< FIX: Set the active source to manual on interaction to prevent data loss
+    st.session_state.active_data_source = 'manual'
 
 def delete_task(task_id_to_delete: int) -> None:
-    """Deletes a task from the session state by its ID."""
+    """Deletes a task and sets the data source to manual."""
     st.session_state.tasks = [
         task for task in st.session_state.tasks if task['id'] != task_id_to_delete
     ]
+    # <<< FIX: Set the active source to manual on interaction to prevent data loss
+    st.session_state.active_data_source = 'manual'
+    
+def set_source_to_manual() -> None:
+    """Sets the active data source to manual when the 'Use' button is clicked."""
+    st.session_state.active_data_source = 'manual'
 
 # --- Main App Function ---
 
@@ -80,7 +85,6 @@ def main() -> None:
     ga_config.CROSSOVER_PROBABILITY = st.sidebar.slider(
         "Tỷ lệ lai ghép (Crossover Probability)", 0.1, 1.0, ga_config.CROSSOVER_PROBABILITY, 0.05
     )
-    # <<< FIX: Restored the Elite Size slider
     ga_config.ELITE_SIZE = st.sidebar.slider(
         "Elite Size (how many top solutions to keep)", 1, 10, int(ga_config.POPULATION_SIZE * 0.1), 1
     )
@@ -101,12 +105,22 @@ def main() -> None:
     
     input_tab1, input_tab2 = st.tabs(["Tải lên tệp JSON", "Nhập thủ công"])
 
-    submitted_from_form = False
     with input_tab1:
         st.subheader("1. Tải lên tệp JSON")
         uploaded_file = st.file_uploader(
             "Tải lên tệp JSON chứa các công việc", type=["json"], label_visibility="collapsed"
         )
+        if uploaded_file is not None:
+            # When a new file is uploaded, set it as the active source
+            st.session_state.active_data_source = 'upload'
+            try:
+                # We need to seek back to the beginning of the file for re-reads
+                uploaded_file.seek(0)
+                st.session_state.uploaded_tasks = json.load(uploaded_file)
+            except (json.JSONDecodeError, KeyError) as e:
+                st.sidebar.error(f"Lỗi đọc tệp: {e}")
+                st.session_state.active_data_source = 'sample' # Revert on error
+                st.stop()
 
     with input_tab2:
         st.subheader("2. Hoặc Nhập Công việc Thủ công")
@@ -152,24 +166,20 @@ def main() -> None:
         with col1:
             st.button("+ Thêm công việc mới", on_click=add_task, use_container_width=True)
         with col2:
-            if st.button("Sử dụng các công việc đã nhập", type="primary", use_container_width=True):
-                submitted_from_form = True
+            st.button("Sử dụng các công việc đã nhập", type="primary", use_container_width=True, on_click=set_source_to_manual)
 
     # --- Task Loading Logic ---
     tasks: Optional[List[Dict[str, Any]]] = None
     final_tasks_for_ga: List[Dict[str, Any]] = []
 
-    if uploaded_file is not None:
-        try:
-            tasks = json.load(uploaded_file)
-            st.sidebar.success(f"Đã tải lên {len(tasks)} công việc!")
-        except (json.JSONDecodeError, KeyError) as e:
-            st.sidebar.error(f"Lỗi đọc tệp: {e}")
-            st.stop()
-    elif submitted_from_form:
+    # <<< FIX: The main logic now reads from the session state flag
+    if st.session_state.active_data_source == 'upload' and st.session_state.uploaded_tasks:
+        tasks = st.session_state.uploaded_tasks
+        st.sidebar.success(f"Đang sử dụng {len(tasks)} công việc từ tệp đã tải lên!")
+    elif st.session_state.active_data_source == 'manual':
         tasks = st.session_state.tasks
-        st.sidebar.success(f"Đã nhận {len(tasks)} công việc từ form!")
-    else:
+        st.sidebar.success(f"Đang sử dụng {len(tasks)} công việc nhập thủ công!")
+    else: # Default to 'sample'
         st.sidebar.info("Sử dụng dữ liệu mẫu. Hãy tải tệp lên hoặc nhập thủ công.")
         try:
             with open("./data/sample_tasks.json", 'r', encoding='utf-8') as f:
