@@ -117,6 +117,7 @@ def convert_schedule_to_dataframe(schedule, tasks_map):
             'Task': task_info.get('name', 'Unnamed Task'),
             'Start': start_time,
             'Finish': finish_time,
+            'Deadline': task_info.get('deadline'),
             'Category': task_info.get('category', 'General'),
             'Priority': task_info.get('priority', 99)
         })

@@ -1,156 +1,112 @@
 [
     {
         "id": 1,
-        "name": "Soạn báo cáo tuần",
-        "estimated_time": 4,
-        "priority": 1,
-        "category": "Công việc",
-        "deadline": "2025-07-25T17:00:00"
-    },
-    {
-        "id": 2,
-        "name": "Chuẩn bị bài thuyết trình",
+        "name": "Sửa slide thuyết trình",
         "estimated_time": 3,
         "priority": 1,
         "category": "Công việc"
     },
     {
-        "id": 3,
-        "name": "Họp nhóm dự án",
-        "estimated_time": 2,
+        "id": 2,
+        "name": "Họp",
+        "estimated_time": 1.5,
         "priority": 1,
+        "category": "Công việc",
+        "predecessor_task_id": 1
+    },
+    {
+        "id": 3,
+        "name": "Gửi email MoM",
+        "estimated_time": 0.5,
+        "priority": 2,
         "category": "Công việc",
         "predecessor_task_id": 2
     },
     {
         "id": 4,
-        "name": "Đi tập gym",
-        "estimated_time": 3,
+        "name": "Chạy deadline DSS",
+        "estimated_time": 5,
+        "priority": 1,
+        "category": "Công việc",
+        "deadline": "2025-07-29T17:00:00"
+    },
+    {
+        "id": 5,
+        "name": "Đi siêu thị",
+        "estimated_time": 2,
+        "priority": 2,
+        "category": "Việc nhà"
+    },
+    {
+        "id": 6,
+        "name": "Tập gym",
+        "estimated_time": 1.5,
         "priority": 2,
         "category": "Sức khỏe"
     },
     {
-        "id": 5,
-        "name": "Học khóa học Python online",
-        "estimated_time": 4,
+        "id": 7,
+        "name": "Ôn thi DSS",
+        "estimated_time": 2,
         "priority": 2,
         "category": "Học tập"
     },
     {
-        "id": 6,
-        "name": "Trả lời các email quan trọng",
-        "estimated_time": 2,
-        "priority": 2,
-        "category": "Công việc"
-    },
-    {
-        "id": 7,
-        "name": "Dọn dẹp nhà cửa",
-        "estimated_time": 4,
-        "priority": 3,
-        "category": "Việc nhà"
-    },
-    {
         "id": 8,
-        "name": "Đi mua sắm thực phẩm",
-        "estimated_time": 3,
+        "name": "Dọn dẹp phòng, giặt đồ",
+        "estimated_time": 2,
         "priority": 3,
         "category": "Việc nhà"
     },
     {
         "id": 9,
-        "name": "Gọi điện cho gia đình",
-        "estimated_time": 1,
-        "priority": 2,
+        "name": "Gọi điện hỏi thăm ba mẹ",
+        "estimated_time": 0.5,
+        "priority": 1,
         "category": "Cá nhân"
     },
     {
         "id": 10,
-        "name": "Đọc sách kỹ thuật",
-        "estimated_time": 2,
+        "name": "Đọc sách",
+        "estimated_time": 1,
         "priority": 3,
-        "category": "Học tập"
+        "category": "Giải trí"
     },
     {
         "id": 11,
-        "name": "Chạy bộ buổi sáng",
-        "estimated_time": 2,
-        "priority": 2,
-        "category": "Sức khỏe",
-        "earliest_start_time": "2025-07-28T06:00:00"
+        "name": "Họp 1-1 với quản lý",
+        "estimated_time": 0.5,
+        "priority": 1,
+        "category": "Công việc",
+        "earliest_start_time": "2025-07-28T14:00:00"
     },
     {
         "id": 12,
-        "name": "Lên kế hoạch du lịch cuối tuần",
-        "estimated_time": 2,
-        "priority": 3,
-        "category": "Cá nhân"
-    },
-    {
-        "id": 13,
-        "name": "Review Pull Request của đồng nghiệp",
-        "estimated_time": 2,
-        "priority": 1,
-        "category": "Công việc"
-    },
-    {
-        "id": 14,
-        "name": "Họp 1-1 với quản lý",
-        "estimated_time": 1,
-        "priority": 1,
-        "category": "Công việc",
-        "earliest_start_time": "2025-07-29T14:00:00"
-    },
-    {
-        "id": 15,
-        "name": "Thanh toán hóa đơn điện/nước/internet",
+        "name": "Đóng tiền điện, nước",
         "estimated_time": 1,
         "priority": 1,
         "category": "Tài chính",
         "deadline": "2025-07-30T23:59:00"
     },
     {
-        "id": 16,
-        "name": "Lên kế hoạch công việc tuần tới",
-        "estimated_time": 3,
-        "priority": 2,
-        "category": "Công việc",
-        "predecessor_task_id": 1
-    },
-    {
-        "id": 17,
-        "name": "Đi khám sức khỏe định kỳ",
+        "id": 13,
+        "name": "Nghiên cứu tài liệu cho dự án mới",
         "estimated_time": 4,
-        "priority": 1,
-        "category": "Sức khỏe",
-        "earliest_start_time": "2025-07-30T08:00:00"
-    },
-    {
-        "id": 18,
-        "name": "Cập nhật tài liệu dự án",
-        "estimated_time": 5,
-        "priority": 3,
+        "priority": 2,
         "category": "Công việc"
     },
     {
-        "id": 19,
-        "name": "Cà phê với bạn bè",
-        "estimated_time": 4,
-        "priority": 2,
+        "id": 14,
+        "name": "Cà phê với bạn",
+        "estimated_time": 2,
+        "priority": 3,
         "category": "Cá nhân"
     },
     {
-        "id": 20,
-        "name": "Xem lại ngân sách chi tiêu tháng",
-        "estimated_time": 2,
-        "priority": 2,
-        "category": "Tài chính"
-    },
-    {
-        "id": 21,
-        "name": "Giặt và phơi quần áo",
-        "estimated_time": 3,
+        "id": 15,
+        "name": "Lên kế hoạch đi chơi",
+        "estimated_time": 1,
         "priority": 3,
-        "category": "Việc nhà"
+        "category": "Giải trí"
     }
 ]
