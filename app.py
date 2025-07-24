@@ -25,8 +25,8 @@ def initialize_session_state() -> None:
     """Initializes the session state for storing tasks and app state if it doesn't exist."""
     if 'tasks' not in st.session_state:
         st.session_state.tasks: List[Dict[str, Any]] = [
-            {"id": 1, "name": "Soạn báo cáo tuần", "estimated_time_hr": 2.0, "priority": 1, "category": "Công việc",
-             "predecessor_task_id": None, "deadline": "2025-07-28", "earliest_start_time": "2025-07-25"}
+            {"id": 1, "name": "Soạn báo cáo DSS", "estimated_time_hr": 1.0, "priority": 1, "category": "Công việc",
+             "predecessor_task_id": None, "deadline": "2025-08-04", "earliest_start_time": "2025-07-25"}
         ]
     
     # <<< FIX: Initialize the active data source state
@@ -106,7 +106,7 @@ def main() -> None:
     input_tab1, input_tab2 = st.tabs(["Tải lên tệp JSON", "Nhập thủ công"])
 
     with input_tab1:
-        st.subheader("1. Tải lên tệp JSON")
+        # st.subheader("1. Tải lên tệp JSON")
         uploaded_file = st.file_uploader(
             "Tải lên tệp JSON chứa các công việc", type=["json"], label_visibility="collapsed"
         )
@@ -123,24 +123,24 @@ def main() -> None:
                 st.stop()
 
     with input_tab2:
-        st.subheader("2. Hoặc Nhập Công việc Thủ công")
+        # st.subheader("2. Hoặc Nhập Công việc Thủ công")
 
-        header_cols = st.columns([0.5, 3, 1, 1, 2, 1.5, 2, 2, 0.5])
+        header_cols = st.columns([0.5, 3, 1.5, 1, 2, 1.5, 1.5, 1.5, 0.5])
         header_cols[0].markdown("**ID**")
         header_cols[1].markdown("**Tên công việc**")
-        header_cols[2].markdown("**Thời gian (giờ)**")
+        header_cols[2].markdown("**Thời gian (h)**")
         header_cols[3].markdown("**Ưu tiên**")
         header_cols[4].markdown("**Danh mục**")
         header_cols[5].markdown("**Việc tiên quyết**")
         header_cols[6].markdown("**Deadline**")
         header_cols[7].markdown("**Bắt đầu sớm nhất**")
         header_cols[8].markdown("**Xóa**")
-        st.divider()
+        # st.divider()
 
         all_task_ids = [task['id'] for task in st.session_state.tasks]
 
         for task in st.session_state.tasks:
-            cols = st.columns([0.5, 3, 1, 1, 2, 1.5, 2, 2, 0.5])
+            cols = st.columns([0.5, 3, 1.5, 1, 2, 1.5, 1.5, 1.5, 0.5])
             
             cols[0].write(f"#{task['id']}")
             task['name'] = cols[1].text_input("Name", value=task["name"], key=f"name_{task['id']}", label_visibility="collapsed")
@@ -256,7 +256,7 @@ def main() -> None:
                         st.subheader("Chi tiết Lịch trình")
                         st.dataframe(schedule_df.sort_values(by="Start").reset_index(drop=True), use_container_width=True)
                         
-                        st.subheader("Nhật ký Tối ưu hóa")
+                        st.subheader("Logbook Chi tiết")
                         log_df = pd.DataFrame(logbook)
                         log_df = log_df[['gen', 'avg', 'min', 'max']]
                         st.dataframe(log_df, use_container_width=True)
