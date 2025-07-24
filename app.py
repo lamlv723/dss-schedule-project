@@ -29,7 +29,6 @@ def initialize_session_state() -> None:
              "predecessor_task_id": None, "deadline": "2025-08-04", "earliest_start_time": "2025-07-25"}
         ]
     
-    # <<< FIX: Initialize the active data source state
     if 'active_data_source' not in st.session_state:
         st.session_state.active_data_source: str = 'sample' # 'sample', 'upload', or 'manual'
     
@@ -71,8 +70,12 @@ def main() -> None:
     initialize_session_state()
 
     # --- Sidebar for GA configuration ---
-    st.sidebar.header("Cấu hình Thuật toán")
+    # st.sidebar.header("Cấu hình Thuật toán")
     
+    # <<< FIX: Create a placeholder at the top of the sidebar for status messages
+    status_placeholder = st.sidebar.empty()
+
+    st.sidebar.subheader("Thông số Thuật toán")
     ga_config.POPULATION_SIZE = st.sidebar.slider(
         "Kích thước quần thể (Population Size)", 10, 500, ga_config.POPULATION_SIZE, 10
     )
@@ -89,7 +92,7 @@ def main() -> None:
         "Elite Size (how many top solutions to keep)", 1, 10, int(ga_config.POPULATION_SIZE * 0.1), 1
     )
     
-    st.sidebar.subheader("Cấu hình Ràng buộc")
+    st.sidebar.subheader("Ràng buộc Thời gian")
     blocked_times_str = st.sidebar.text_area(
         "Khung giờ bận", value=app_config.DEFAULT_BLOCKED_TIMES, height=200
     )
@@ -119,7 +122,7 @@ def main() -> None:
                 st.session_state.uploaded_tasks = json.load(uploaded_file)
             except (json.JSONDecodeError, KeyError) as e:
                 st.sidebar.error(f"Lỗi đọc tệp: {e}")
-                st.session_state.active_data_source = 'sample' # Revert on error
+                st.session_state.active_data_source = 'sample'
                 st.stop()
 
     with input_tab2:
@@ -162,6 +165,7 @@ def main() -> None:
 
         st.divider()
         
+        # st.button("+ Thêm công việc mới", on_click=add_task, use_container_width=True)
         col1, col2 = st.columns(2)
         with col1:
             st.button("+ Thêm công việc mới", on_click=add_task, use_container_width=True)
@@ -171,23 +175,36 @@ def main() -> None:
     # --- Task Loading Logic ---
     tasks: Optional[List[Dict[str, Any]]] = None
     final_tasks_for_ga: List[Dict[str, Any]] = []
+    
+    # <<< FIX: Determine the status message based on the active data source
+    status_message: str = ""
+    status_type: str = "info"
 
     # <<< FIX: The main logic now reads from the session state flag
     if st.session_state.active_data_source == 'upload' and st.session_state.uploaded_tasks:
         tasks = st.session_state.uploaded_tasks
-        st.sidebar.success(f"Đang sử dụng {len(tasks)} công việc từ tệp đã tải lên!")
+        status_message = f"Đang sử dụng {len(tasks)} công việc từ tệp đã tải lên!"
+        status_type = "success"
     elif st.session_state.active_data_source == 'manual':
         tasks = st.session_state.tasks
-        st.sidebar.success(f"Đang sử dụng {len(tasks)} công việc nhập thủ công!")
+        status_message = f"Đang sử dụng {len(tasks)} công việc nhập thủ công!"
+        status_type = "success"
     else: # Default to 'sample'
-        st.sidebar.info("Sử dụng dữ liệu mẫu. Hãy tải tệp lên hoặc nhập thủ công.")
+        status_message = "Sử dụng dữ liệu mẫu. Hãy tải tệp lên hoặc nhập thủ công."
+        status_type = "info"
         try:
             with open("./data/sample_tasks.json", 'r', encoding='utf-8') as f:
                 tasks = json.load(f)
         except (json.JSONDecodeError, KeyError, FileNotFoundError) as e:
             st.sidebar.error(f"Lỗi đọc tệp mẫu: {e}")
             st.stop()
-    
+
+    # <<< FIX: Populate the placeholder with the determined message
+    if status_type == "success":
+        status_placeholder.success(status_message)
+    else:
+        status_placeholder.info(status_message)
+
     # --- Final Task Processing and Display ---
     if tasks:
         for task in tasks:
