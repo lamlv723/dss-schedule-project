@@ -15,7 +15,7 @@ def main():
     Main function to run the Streamlit application.
     """
     st.set_page_config(layout="wide")
-    st.title("Weekly Task Scheduler using Genetic Algorithm")
+    st.title("🗓️ Weekly Task Scheduler")
 
     st.sidebar.header("Configuration")
     

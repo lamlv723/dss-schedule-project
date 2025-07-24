@@ -17,8 +17,8 @@ DEFAULT_BLOCKED_TIMES = """
 # Sleep (Daily 11 PM to 7 AM)
 daily 23:00-07:00
 
-# Lunch (Daily 12:30 PM to 1:30 PM)
-daily 12:30-13:30
+# Lunch (Daily 12:00 PM to 1:00 PM)
+daily 12:00-13:00
 
 # Dinner (Daily 7 PM to 8 PM)
 daily 19:00-20:00
