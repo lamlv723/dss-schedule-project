@@ -1,5 +1,3 @@
-# ga_core/engine.py
-
 import random
 import numpy as np
 from deap import base, tools, creator
@@ -25,11 +23,11 @@ def run_ga_optimization(tasks_map, task_instances, blocked_slots, progress_callb
     
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean)
-    stats.register("min", np.min)
-    stats.register("max", np.max)
+    # stats.register("min", np.min)
+    stats.register("fitness", np.max)
     
     logbook = tools.Logbook()
-    logbook.header = "gen", "avg", "min", "max"
+    logbook.header = "gen", "avg", "fitness"
 
     fitnesses = map(toolbox.evaluate, population)
     for ind, fit in zip(population, fitnesses):
@@ -64,8 +62,8 @@ def run_ga_optimization(tasks_map, task_instances, blocked_slots, progress_callb
         logbook.record(gen=gen + 1, **record)
         
         progress_value = (gen + 1) / ga_config.N_GENERATIONS
-        # <<< FIX: Hiển thị điểm 'max' vì đây là bài toán tối đa hóa
-        best_score = record.get('max', 0.0)
+
+        best_score = record.get('fitness', 0.0)
         progress_callback(progress_value, f"Generation {gen + 1}/{ga_config.N_GENERATIONS} - Best Score: {best_score:.4f}")
 
     best_individual = tools.selBest(population, k=1)

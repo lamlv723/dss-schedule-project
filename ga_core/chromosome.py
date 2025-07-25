@@ -1,8 +1,5 @@
-# ga_core/chromosome.py
-
 from deap import base, creator
 
-# <<< FIX: Đổi tên thành FitnessMax và weights=(1.0,) để tìm giá trị lớn nhất.
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 
 # Create the Individual class. It will be a list of tuples, where each

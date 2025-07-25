@@ -1,5 +1,3 @@
-# config/ga_config.py
-
 # --- GA Parameters ---
 POPULATION_SIZE = 100
 CROSSOVER_PROBABILITY = 0.8
@@ -28,10 +26,10 @@ MUTATION_TYPE_PROBS = {
 # These weights determine the importance of each soft constraint.
 # Higher values mean the GA will prioritize satisfying that constraint.
 FITNESS_WEIGHTS = {
-    "priority": 1.5,
-    "deadline": 2.0,
-    "idle_time": 1.0,
-    "category_switching": 0.5,
+    "priority": 0.3,
+    "deadline": 0.4,
+    "idle_time": 0.2,
+    "category_switching": 0.1,
 }
 
 # --- Fitness Score Scaling ---

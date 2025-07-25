@@ -1,5 +1,3 @@
-# ga_core/fitness.py
-
 import math
 from datetime import datetime, timedelta
 from config import app_config, ga_config
@@ -21,14 +19,14 @@ def calculate_fitness(individual, tasks_map, blocked_slots):
     for task_id, start_slot in individual:
         task = tasks_map.get(task_id)
         if not task:
-            return (0.0,) # <<< FIX: Invalid task ID returns 0.0
+            return (0.0,) # <<< Invalid task ID returns 0.0
 
         duration = task.get('estimated_time', 1)
         end_slot = start_slot + duration
 
         for slot in range(start_slot, end_slot):
             if slot in scheduled_slots or slot in blocked_slots:
-                return (0.0,) # <<< FIX: Overlap or blocked time returns 0.0
+                return (0.0,) # <<< Overlap or blocked time returns 0.0
             scheduled_slots[slot] = task_id
         
         task_finish_times[task_id] = end_slot
@@ -42,7 +40,7 @@ def calculate_fitness(individual, tasks_map, blocked_slots):
             if pred_instance_id in task_finish_times:
                 pred_finish_time = task_finish_times[pred_instance_id]
                 if start_slot < pred_finish_time:
-                    return (0.0,) # <<< FIX: Precedence violation returns 0.0
+                    return (0.0,) # <<< Precedence violation returns 0.0
 
     for task_id, start_slot in individual:
         task = tasks_map.get(task_id)
@@ -52,7 +50,7 @@ def calculate_fitness(individual, tasks_map, blocked_slots):
                 schedule_start_dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
                 earliest_start_slot = (earliest_start_dt - schedule_start_dt).total_seconds() / (app_config.TIME_SLOT_DURATION * 60)
                 if start_slot < earliest_start_slot:
-                    return (0.0,) # <<< FIX: Earliest start violation returns 0.0
+                    return (0.0,) # <<< Earliest start violation returns 0.0
             except (ValueError, TypeError):
                 pass
 
@@ -114,7 +112,8 @@ def calculate_fitness(individual, tasks_map, blocked_slots):
                 category_penalty += 1
     total_penalty += ga_config.FITNESS_WEIGHTS['category_switching'] * category_penalty
 
-    # Convert the total penalty into a fitness score (higher is better)
+    # Revert to a maximization score
+    # The fitness score is inversely proportional to the total penalty
     fitness_score = ga_config.MAX_FITNESS_SCORE / (1.0 + total_penalty)
 
     return (fitness_score,)

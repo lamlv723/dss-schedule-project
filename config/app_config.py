@@ -1,5 +1,3 @@
-# config/app_config.py
-
 # Duration of each time slot in minutes
 TIME_SLOT_DURATION = 30
 
