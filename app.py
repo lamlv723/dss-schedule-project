@@ -44,7 +44,7 @@ def add_task() -> None:
         "id": new_task_id, "name": "", "estimated_time_hr": 1.0, "priority": 3, "category": "",
         "predecessor_task_id": None, "deadline": None, "earliest_start_time": None
     })
-    # <<< FIX: Set the active source to manual on interaction to prevent data loss
+    # Set the active source to manual on interaction to prevent data loss
     st.session_state.active_data_source = 'manual'
 
 def delete_task(task_id_to_delete: int) -> None:
@@ -52,7 +52,7 @@ def delete_task(task_id_to_delete: int) -> None:
     st.session_state.tasks = [
         task for task in st.session_state.tasks if task['id'] != task_id_to_delete
     ]
-    # <<< FIX: Set the active source to manual on interaction to prevent data loss
+    # Set the active source to manual on interaction to prevent data loss
     st.session_state.active_data_source = 'manual'
     
 def set_source_to_manual() -> None:
@@ -66,17 +66,15 @@ def main() -> None:
     Main function to run the Streamlit application.
     """
     st.set_page_config(layout="wide")
-    st.title("Lập Lịch Công Việc Tuần Bằng Thuật Toán Di Truyền")
+    st.title("🗓️ Tạo lịch trình công việc bằng Thuật toán Di truyền")
 
     initialize_session_state()
 
     # --- Sidebar for GA configuration ---
-    # st.sidebar.header("Cấu hình Thuật toán")
     
-    # <<< FIX: Create a placeholder at the top of the sidebar for status messages
     status_placeholder = st.sidebar.empty()
 
-    st.sidebar.subheader("Thông số Thuật toán")
+    st.sidebar.header("Cấu hình thuật toán")
     ga_config.POPULATION_SIZE = st.sidebar.slider(
         "Kích thước quần thể (Population Size)", 10, 500, ga_config.POPULATION_SIZE, 10
     )
@@ -105,14 +103,14 @@ def main() -> None:
         st.stop()
 
     # --- Main Screen Area ---
-    st.header("Tùy chọn Nhập liệu Công việc")
+    # st.header("Tùy chọn Nhập liệu Công việc")
     
     input_tab1, input_tab2 = st.tabs(["Tải lên tệp JSON", "Nhập thủ công"])
 
     with input_tab1:
         # st.subheader("1. Tải lên tệp JSON")
         uploaded_file = st.file_uploader(
-            "Tải lên tệp JSON chứa các công việc", type=["json"], label_visibility="collapsed"
+            "Tải lên tệp JSON", type=["json"], label_visibility="collapsed"
         )
         if uploaded_file is not None:
             # When a new file is uploaded, set it as the active source
@@ -200,7 +198,6 @@ def main() -> None:
             st.sidebar.error(f"Lỗi đọc tệp mẫu: {e}")
             st.stop()
 
-    # <<< FIX: Populate the placeholder with the determined message
     if status_type == "success":
         status_placeholder.success(status_message)
     else:
@@ -223,7 +220,7 @@ def main() -> None:
                     processed_task[key] = None
             final_tasks_for_ga.append(processed_task)
         
-        st.header("Các công việc cần sắp xếp")
+        st.header("Danh sách công việc cần sắp xếp")
         task_for_display = copy.deepcopy(final_tasks_for_ga)  # Use a deep copy to avoid modifying the original data
         # Convert estimated time to hours for display
         for task in task_for_display:
@@ -278,7 +275,7 @@ def main() -> None:
                         st.subheader("Chi tiết Lịch trình")
                         st.dataframe(schedule_df.sort_values(by="Start").reset_index(drop=True), use_container_width=True)
                         
-                        st.subheader("Logbook Chi tiết")
+                        st.subheader("Log")
                         log_df = pd.DataFrame(logbook)
                         log_df = log_df[['gen', 'avg', 'fitness']]
                         st.dataframe(log_df, use_container_width=True)
