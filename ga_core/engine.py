@@ -1,5 +1,3 @@
-# ga_core/engine.py
-
 import random
 import numpy as np
 from deap import base, tools, creator
@@ -65,7 +63,7 @@ def run_ga_optimization(tasks_map, task_instances, blocked_slots, progress_callb
         
         progress_value = (gen + 1) / ga_config.N_GENERATIONS
 
-        best_score = record.get('max', 0.0)
+        best_score = record.get('fitness', 0.0)
         progress_callback(progress_value, f"Generation {gen + 1}/{ga_config.N_GENERATIONS} - Best Score: {best_score:.4f}")
 
     best_individual = tools.selBest(population, k=1)

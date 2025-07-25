@@ -1,5 +1,3 @@
-# ga_core/operators.py
-
 import random
 from config import app_config, ga_config
 from deap import tools
@@ -34,7 +32,6 @@ def create_random_schedule(individual_class, task_instances, blocked_slots):
                 placed = True
                 break
         
-        # <<< FIX: Logic dự phòng thông minh hơn, kiểm tra toàn bộ thời lượng
         if not placed:
             # Fallback: if no non-overlapping slot is found, try to find the first possible valid slot
             for start_slot in range(app_config.TOTAL_TIME_SLOTS):
@@ -72,17 +69,16 @@ def custom_crossover(ind1, ind2, task_instances):
         if start >= cut_point and task_id not in child1_tasks:
             child1_tasks[task_id] = start
             
-    # <<< FIX: Corrected variable name from child_tasks to child1_tasks
     repaired_child_list = repair_schedule(child1_tasks, task_instances)
     
-    # For simplicity, we create one child and modify ind1. ind2 is left unchanged.
+    # For simplicity, create one child and modify ind1. ind2 is left unchanged.
     ind1[:] = repaired_child_list
     # A more complex implementation could create two distinct children.
     return ind1, ind2
 
 def repair_schedule(child_tasks, all_task_instances):
     """Repairs an individual to ensure all tasks are present exactly once."""
-    final_schedule = [] # <<< FIX: Initialized as an empty list
+    final_schedule = []
     all_instance_ids = {t['instance_id'] for t in all_task_instances}
     scheduled_ids = set(child_tasks.keys())
 

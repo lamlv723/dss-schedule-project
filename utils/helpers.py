@@ -1,5 +1,3 @@
-# utils/helpers.py
-
 import json
 import pandas as pd
 from datetime import datetime, timedelta
@@ -65,13 +63,11 @@ def parse_blocked_times(blocked_times_str):
         end_slot_of_day = (end_hour * 60 + end_minute) // app_config.TIME_SLOT_DURATION
 
         if scope.lower() == 'daily':
-            # --- FIX STARTS HERE ---
             # This explicitly handles the overnight case for the very first day
             # before the main loop starts.
             if start_slot_of_day > end_slot_of_day:
                 for slot in range(0, end_slot_of_day):
                     blocked_slots.add(slot)
-            # --- FIX ENDS HERE ---
 
             for day in range(app_config.DAYS_IN_SCHEDULE):
                 day_offset = day * app_config.SLOTS_PER_DAY
@@ -100,7 +96,7 @@ def convert_schedule_to_dataframe(schedule, tasks_map):
     if not schedule:
         return pd.DataFrame()
 
-    schedule_data = [] # <<< FIX: Initialized as an empty list
+    schedule_data = []
     start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     for task_id, start_slot in schedule:
