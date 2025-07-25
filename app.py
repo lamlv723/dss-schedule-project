@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import json
+import copy
 from datetime import datetime
 from typing import List, Dict, Any, Union, Optional
 
@@ -223,7 +224,11 @@ def main() -> None:
             final_tasks_for_ga.append(processed_task)
         
         st.header("Các công việc cần sắp xếp")
-        st.dataframe(pd.DataFrame(final_tasks_for_ga), use_container_width=True, hide_index=True)
+        task_for_display = copy.deepcopy(final_tasks_for_ga)  # Use a deep copy to avoid modifying the original data
+        # Convert estimated time to hours for display
+        for task in task_for_display:
+            task['estimated_time'] = task['estimated_time'] * (app_config.TIME_SLOT_DURATION / 60.0)  # Convert to hours for display
+        st.dataframe(pd.DataFrame(task_for_display), use_container_width=True, hide_index=True)
     
         if st.button("Tạo Lịch Trình", type="primary", use_container_width=True):
             if final_tasks_for_ga:

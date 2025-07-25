@@ -25,7 +25,7 @@
     {
         "id": 4,
         "name": "Chạy deadline DSS",
-        "estimated_time": 4,
+        "estimated_time": 5,
         "priority": 1,
         "category": "Công việc",
         "deadline": "2025-07-29T17:00:00"
@@ -47,7 +47,7 @@
     {
         "id": 7,
         "name": "Ôn thi DSS",
-        "estimated_time": 3,
+        "estimated_time": 2,
         "priority": 2,
         "category": "Học tập"
     },
@@ -68,7 +68,7 @@
     {
         "id": 10,
         "name": "Đọc sách",
-        "estimated_time": 1.5,
+        "estimated_time": 1,
         "priority": 3,
         "category": "Giải trí"
     },
@@ -83,7 +83,7 @@
     {
         "id": 12,
         "name": "Đóng tiền điện, nước",
-        "estimated_time": 0.5,
+        "estimated_time": 1,
         "priority": 1,
         "category": "Tài chính",
         "deadline": "2025-07-30T23:59:00"
@@ -98,14 +98,14 @@
     {
         "id": 14,
         "name": "Cà phê với bạn",
-        "estimated_time": 4,
+        "estimated_time": 2,
         "priority": 3,
         "category": "Cá nhân"
     },
     {
         "id": 15,
         "name": "Lên kế hoạch đi chơi",
-        "estimated_time": 2,
+        "estimated_time": 1,
         "priority": 3,
         "category": "Giải trí"
     }
