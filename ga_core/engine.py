@@ -25,11 +25,11 @@ def run_ga_optimization(tasks_map, task_instances, blocked_slots, progress_callb
     
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean)
-    stats.register("min", np.min)
-    stats.register("max", np.max)
+    # stats.register("min", np.min)
+    stats.register("fitness", np.max)
     
     logbook = tools.Logbook()
-    logbook.header = "gen", "avg", "min", "max"
+    logbook.header = "gen", "avg", "fitness"
 
     fitnesses = map(toolbox.evaluate, population)
     for ind, fit in zip(population, fitnesses):

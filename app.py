@@ -280,7 +280,7 @@ def main() -> None:
                         
                         st.subheader("Logbook Chi tiết")
                         log_df = pd.DataFrame(logbook)
-                        log_df = log_df[['gen', 'avg', 'min', 'max']]
+                        log_df = log_df[['gen', 'avg', 'fitness']]
                         st.dataframe(log_df, use_container_width=True)
             else:
                 st.warning("Không có công việc nào để sắp xếp. Vui lòng tải tệp lên hoặc nhập thủ công.")
