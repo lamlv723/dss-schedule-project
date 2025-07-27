@@ -14,16 +14,27 @@
         "category": "Công việc",
         "predecessor_task_id": 1
     },
-    {
+        {
         "id": 3,
-        "name": "Gửi email MoM",
-        "estimated_time": 0.5,
-        "priority": 2,
+        "name": "Làm đồ án DSS",
+        "estimated_time": 5,
+        "priority": 1,
         "category": "Công việc",
-        "predecessor_task_id": 2
+        "deadline": "2025-08-01T17:00:00"
     },
     {
         "id": 4,
+
+        "name": "Demo đồ án DSS",
+        "estimated_time": 0.5,
+        "priority": 2,
+        "category": "Công việc",
+        "predecessor_task_id": 3,
+        "earliest_start_time": "2025-08-03T19:00:00"
+        
+    },
+    {
+        "id": 5,
         "name": "Chạy deadline DSS",
         "estimated_time": 4,
         "priority": 1,
@@ -31,54 +42,46 @@
         "deadline": "2025-07-29T17:00:00"
     },
     {
-        "id": 5,
+        "id": 6,
         "name": "Đi siêu thị",
         "estimated_time": 2,
         "priority": 2,
         "category": "Việc nhà"
     },
     {
-        "id": 6,
+        "id": 7,
         "name": "Tập gym",
         "estimated_time": 1.5,
         "priority": 2,
         "category": "Sức khỏe"
     },
     {
-        "id": 7,
+        "id": 8,
         "name": "Ôn thi DSS",
         "estimated_time": 3,
         "priority": 2,
         "category": "Học tập"
     },
     {
-        "id": 8,
+        "id": 9,
         "name": "Dọn dẹp phòng, giặt đồ",
         "estimated_time": 2,
         "priority": 3,
         "category": "Việc nhà"
     },
     {
-        "id": 9,
+        "id": 10,
         "name": "Gọi điện hỏi thăm ba mẹ",
         "estimated_time": 0.5,
         "priority": 1,
         "category": "Cá nhân"
     },
     {
-        "id": 10,
+        "id": 11,
         "name": "Đọc sách",
         "estimated_time": 1.5,
         "priority": 3,
         "category": "Giải trí"
-    },
-    {
-        "id": 11,
-        "name": "Họp 1-1 với quản lý",
-        "estimated_time": 0.5,
-        "priority": 1,
-        "category": "Công việc",
-        "earliest_start_time": "2025-07-28T14:00:00"
     },
     {
         "id": 12,
