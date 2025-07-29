@@ -71,9 +71,9 @@ def custom_crossover(ind1, ind2, task_instances):
             
     repaired_child_list = repair_schedule(child1_tasks, task_instances)
     
-    # For simplicity, create one child and modify ind1. ind2 is left unchanged.
+    # modify ind1. ind2 is left unchanged.
     ind1[:] = repaired_child_list
-    # A more complex implementation could create two distinct children.
+
     return ind1, ind2
 
 def repair_schedule(child_tasks, all_task_instances):
