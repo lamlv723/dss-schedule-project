@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from config import app_config
 import plotly.express as px
+import plotly.graph_objects as go
 
 def load_tasks_from_json(filepath):
     """Parses the user-provided JSON file into a list of task dictionaries."""
@@ -122,3 +123,34 @@ def convert_schedule_to_dataframe(schedule, tasks_map):
     if not df.empty:
         df = df.sort_values(by='Start').reset_index(drop=True)
     return df
+
+def create_convergence_chart(logbook):
+    """
+    creates a Plotly line chart showing the convergence of the GA over generations.
+    """
+    # Extract the relevant data from the logbook
+    gen = logbook.select("gen")
+
+    max_fitness = logbook.select("fitness") 
+    avg_fitness = logbook.select("avg")
+
+    fig = go.Figure()
+
+    # Add lines
+    fig.add_trace(go.Scatter(x=gen, y=max_fitness,
+                        mode='lines',
+                        name='Fitness cao nhất'))
+    
+    fig.add_trace(go.Scatter(x=gen, y=avg_fitness,
+                        mode='lines',
+                        name='Fitness trung bình',
+                        line=dict(dash='dash')))
+
+    fig.update_layout(
+        xaxis_title='Thế hệ',
+        yaxis_title='Điểm Fitness',
+        legend_title='Thống kê',
+        hovermode="x unified"
+    )
+
+    return fig

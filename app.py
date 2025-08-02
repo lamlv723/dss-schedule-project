@@ -9,7 +9,7 @@ from typing import List, Dict, Any, Union, Optional
 from config import app_config, ga_config
 from ga_core.engine import run_ga_optimization
 from ga_core import chromosome
-from utils.helpers import convert_schedule_to_dataframe, parse_blocked_times, create_gantt_chart
+from utils.helpers import convert_schedule_to_dataframe, parse_blocked_times, create_gantt_chart, create_convergence_chart
 
 # --- Helper functions for session state and data conversion ---
 
@@ -276,9 +276,14 @@ def main() -> None:
                         st.dataframe(schedule_df.sort_values(by="Start").reset_index(drop=True), use_container_width=True)
                         
                         st.subheader("Log")
-                        log_df = pd.DataFrame(logbook)
-                        log_df = log_df[['gen', 'avg', 'fitness']]
-                        st.dataframe(log_df, use_container_width=True)
+
+                        ##### Old code to display logbook as a DataFrame #####
+                        # log_df = pd.DataFrame(logbook)
+                        # log_df = log_df[['gen', 'avg', 'fitness']]
+                        # st.dataframe(log_df, use_container_width=True)
+
+                        convergence_fig = create_convergence_chart(logbook)
+                        st.plotly_chart(convergence_fig, use_container_width=True)
             else:
                 st.warning("Không có công việc nào để sắp xếp. Vui lòng tải tệp lên hoặc nhập thủ công.")
 
