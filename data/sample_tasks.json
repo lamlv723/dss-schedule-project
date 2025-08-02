@@ -20,7 +20,7 @@
         "estimated_time": 5,
         "priority": 1,
         "category": "Công việc",
-        "deadline": "2025-08-03T17:00:00"
+        "deadline": "2025-08-06T23:59:00"
     },
     {
         "id": 4,
@@ -29,17 +29,17 @@
         "priority": 2,
         "category": "Công việc",
         "predecessor_task_id": 3,
-        "earliest_start_time": "2025-08-04T19:00:00",
-        "deadline": "2025-08-04T22:00:00"
+        "earliest_start_time": "2025-08-07T19:00:00",
+        "deadline": "2025-08-07T22:00:00"
         
     },
     {
         "id": 5,
-        "name": "Chạy deadline DSS",
+        "name": "Chạy deadline bài tập DSS",
         "estimated_time": 4,
         "priority": 1,
         "category": "Công việc",
-        "deadline": "2025-08-03T17:00:00"
+        "deadline": "2025-08-10T21:00:00"
     },
     {
         "id": 6,
@@ -89,7 +89,7 @@
         "estimated_time": 0.5,
         "priority": 1,
         "category": "Tài chính",
-        "deadline": "2025-08-10T23:59:00"
+        "deadline": "2025-08-21T23:59:00"
     },
     {
         "id": 13,
