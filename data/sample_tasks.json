@@ -14,23 +14,23 @@
         "category": "Công việc",
         "predecessor_task_id": 1
     },
-        {
+    {
         "id": 3,
         "name": "Làm đồ án DSS",
         "estimated_time": 5,
         "priority": 1,
         "category": "Công việc",
-        "deadline": "2025-08-01T17:00:00"
+        "deadline": "2025-08-03T17:00:00"
     },
     {
         "id": 4,
-
         "name": "Demo đồ án DSS",
         "estimated_time": 0.5,
         "priority": 2,
         "category": "Công việc",
         "predecessor_task_id": 3,
-        "earliest_start_time": "2025-08-03T19:00:00"
+        "earliest_start_time": "2025-08-04T19:00:00",
+        "deadline": "2025-08-04T22:00:00"
         
     },
     {
@@ -39,7 +39,7 @@
         "estimated_time": 4,
         "priority": 1,
         "category": "Công việc",
-        "deadline": "2025-07-29T17:00:00"
+        "deadline": "2025-08-03T17:00:00"
     },
     {
         "id": 6,
@@ -79,7 +79,7 @@
     {
         "id": 11,
         "name": "Đọc sách",
-        "estimated_time": 1.5,
+        "estimated_time": 2,
         "priority": 3,
         "category": "Giải trí"
     },
@@ -89,7 +89,7 @@
         "estimated_time": 0.5,
         "priority": 1,
         "category": "Tài chính",
-        "deadline": "2025-07-30T23:59:00"
+        "deadline": "2025-08-10T23:59:00"
     },
     {
         "id": 13,

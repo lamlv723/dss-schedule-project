@@ -59,7 +59,7 @@ def create_random_schedule(individual_class, task_instances, blocked_slots):
     return individual_class(schedule)
 
 def custom_crossover(ind1, ind2, task_instances):
-    """Custom time-slot based crossover operator with repair."""
+    """Crossover function with repair mechanism."""
     cut_point = random.randint(0, app_config.TOTAL_TIME_SLOTS)
     
     child1_tasks = {task_id: start for task_id, start in ind1 if start < cut_point}
@@ -71,9 +71,10 @@ def custom_crossover(ind1, ind2, task_instances):
             
     repaired_child_list = repair_schedule(child1_tasks, task_instances)
     
-    # modify ind1. ind2 is left unchanged.
+    # replace ind1 with the repaired child
     ind1[:] = repaired_child_list
 
+    # modify ind1. ind2 is left unchanged.
     return ind1, ind2
 
 def repair_schedule(child_tasks, all_task_instances):
